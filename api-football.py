@@ -70,6 +70,18 @@ def request(path, query):
     return response
 
 
+def save_data(data, filename):
+    """
+    Saves the data to a json and csv file.
+
+    :param data: Dataframe with the data (pd.DataFrame).
+    :param filename: Name of the file (str).
+    :return: None.
+    """
+    data.to_json(f"data/{filename}.json", orient="records", indent=4)
+    data.to_csv(f"data/{filename}.csv", index=False)
+
+
 def get_fixtures(ids, start_season=2015, end_season=2021):
     """
     Gets the fixtures for all leagues in IDS for the given seasons.
@@ -95,57 +107,78 @@ def get_fixtures(ids, start_season=2015, end_season=2021):
     return fixtures
 
 
-def save_data(data, filename):
-    """
-    Saves the data to a json and csv file.
-
-    :param data: Dataframe with the data (pd.DataFrame).
-    :param filename: Name of the file (str).
-    :return: None.
-    """
-    data.to_json(f"data/{filename}.json", orient="records", indent=4)
-    data.to_csv(f"data/{filename}.csv", index=False)
-
-
 def get_fixture_stats():
     stats = pd.DataFrame()
 
-    fixtures = pd.read_csv("data/fixtures.csv")
+    fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
     fixture_ids = fixtures["fixture.id"]
 
-    for idx in tqdm(fixture_ids, desc="Fixtures"):
+    for idx in tqdm(fixture_ids, desc="Fixture stats"):
         query = {"fixture": idx}
         response = request("/fixtures/statistics", query).json()
 
         if response["errors"]:
-            print(f"Error (fixture {id}): {response['errors']}")
+            print(f"Error (fixture {idx}): {response['errors']}")
+            return stats
         else:
             new_stats = pd.json_normalize(response,
                                           record_path=["response", "statistics"],
-                                          meta=[["parameters", "fixture"],
-                                                ["response", "team", "id"],
+                                          meta=[["response", "team", "id"],
                                                 ["response", "team", "name"]])
+            new_stats.insert(0, "fixture.id", idx)
             stats = pd.concat([stats, new_stats])
 
     return stats
 
 
+def get_fixture_h2h():
+    h2h = pd.DataFrame()
+
+    fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
+    fixtures = fixtures[["fixture.id", "teams.home.id", "teams.away.id", "fixture.date"]]
+
+    for (idx, home, away, date) in tqdm(fixtures.itertuples(index=False), desc="Fixture h2h"):
+        query = {
+            "h2h": f"{home}-{away}",
+            "from": "",  # TODO
+            "to": date[:10],  # Only use the date, not the time
+            # Only finished matches (FT = full time, AET = after extra time, PEN = penalty shootout)
+            "status": "FT-AET-PEN"
+        }
+        response = request("/fixtures/statistics", query).json()
+
+        if response["errors"]:
+            print(f"Error (fixture {idx}): {response['errors']}")
+        else:
+            # TODO
+            new_h2h = pd.json_normalize(response,
+                                        record_path=[],
+                                        meta=[])
+            h2h = pd.concat([h2h, new_h2h])
+
+    return h2h
+
+
 def main():
+    usage_message = "Usage: python3 api-football.py -1/-2/-3 <filename>"
+
     if len(sys.argv) != 3:
-        print("Usage: python3 api-football.py -1/-2 <filename>")
+        print(usage_message)
         sys.exit(1)
 
     filename = sys.argv[2]
     check_file_exists(filename)
 
-    ids = read_ids("ids.csv")
+    ids = read_ids("data/ids.csv")
 
     if sys.argv[1] == "-1":
         data = get_fixtures(ids)
     elif sys.argv[1] == "-2":
         data = get_fixture_stats()
+    elif sys.argv[1] == "-3":
+        data = get_fixture_h2h()
     else:
-        print("Usage: python3 api-football.py -1/-2 <filename>")
+        print(usage_message)
         sys.exit(1)
 
     save_data(data, filename)
