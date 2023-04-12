@@ -10,6 +10,7 @@ TODO
 
 import pandas as pd
 from tqdm import tqdm
+import os
 
 ERROR = []
 
@@ -28,9 +29,17 @@ def get_prev_fixtures(fixtures, fixture_id, team_id, n=1):
     before_fixtures = before_fixtures.sort_values(by="fixture.date", ascending=False)
 
     if before_fixtures.shape[0] > 0:
-        return before_fixtures.head(n)["fixture.id"]
+        return before_fixtures.head(n)["fixture.id"].reset_index(drop=True)
 
     return None
+
+
+def get_fixture_score(fixtures, fixture_id, description):
+    fixture = fixtures[fixtures["fixture.id"] == fixture_id]
+    fixture = fixture[["score.fulltime.home", "score.fulltime.away"]]
+    fixture.columns = [f"{col} ({description})" for col in fixture.columns]
+
+    return fixture.astype(int).reset_index(drop=True)
 
 
 def get_fixture_stats(fixture_stats, fixture_id, team_id, description):
@@ -53,10 +62,19 @@ def get_fixture_stats(fixture_stats, fixture_id, team_id, description):
 
     stats.columns = [f"{col} ({description})" for col in stats.columns]
 
-    return stats
+    return stats.reset_index(drop=True)
 
 
-def create_data_and_targets(fixtures, fixture_stats, n=1):
+def add_target(targets, row):
+    if row["teams.home.winner"] is True:
+        return pd.concat([targets, pd.Series(1)])
+    elif row["teams.away.winner"] is True:
+        return pd.concat([targets, pd.Series(-1)])
+    else:
+        return pd.concat([targets, pd.Series(0)])
+
+
+def create_data_and_targets(fixtures, fixture_stats, n=10):
     # TODO: optimize?
     data = pd.DataFrame()
     targets = pd.Series(name="winner", dtype=int)
@@ -65,46 +83,48 @@ def create_data_and_targets(fixtures, fixture_stats, n=1):
         home = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.home.id"], n=n)
         away = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.away.id"], n=n)
 
+        # TODO: missing data
         if home is None or away is None or home.size != n or away.size != n:
             continue
 
         stats = pd.DataFrame()
 
         for i in range(n):
+            home_score = get_fixture_score(fixtures, home.iloc[i], f"home {i + 1}")
+            away_score = get_fixture_score(fixtures, away.iloc[i], f"away {i + 1}")
             home_stats = get_fixture_stats(fixture_stats, home.iloc[i], row["teams.home.id"], f"home {i + 1}")
             away_stats = get_fixture_stats(fixture_stats, away.iloc[i], row["teams.away.id"], f"away {i + 1}")
 
+            # TODO: missing data
             if home_stats is None or away_stats is None:
-                continue
+                stats = pd.DataFrame()
+                break
 
-            stats = pd.concat([stats, home_stats, away_stats], axis=1)
+            stats = pd.concat([stats, home_score, home_stats, away_score, away_stats], axis=1)
+
+        if stats.shape[0] == 0:
+            continue
 
         data = pd.concat([data, stats], axis=0)
+        targets = add_target(targets, row)
 
-        if row["teams.home.winner"] is True:
-            targets = pd.concat([targets, pd.Series(1)])
-        elif row["teams.away.winner"] is True:
-            targets = pd.concat([targets, pd.Series(-1)])
-        else:
-            targets = pd.concat([targets, pd.Series(0)])
-
-    # Reset the index
-    data.index = range(data.shape[0])
-    targets.index = range(targets.shape[0])
-
-    return data, targets
+    return data.reset_index(drop=True), targets.reset_index(drop=True)
 
 
 def main():
     fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
-    fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT", "AET", "PEN"])]
-    # fixtures = fixtures.head(500)
+    # TODO: ["FT", "AET", "PEN"]?
+    fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT"])]
+    # fixtures = fixtures.head(200)
 
-    fixture_stats = pd.read_csv("data/fixture_stats1-15652.csv", low_memory=False)
+    fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
-    data, targets = create_data_and_targets(fixtures, fixture_stats, n=2)
+    data, targets = create_data_and_targets(fixtures, fixture_stats)
     data.to_csv("data/ml_data.csv", index=False)
     targets.to_csv("data/targets.csv", index=False, header=False)
+
+    if os.path.exists("errors.txt"):
+        os.remove("errors.txt")
 
     if ERROR:
         with open("errors.txt", "w") as f:
