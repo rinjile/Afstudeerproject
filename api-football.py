@@ -45,7 +45,7 @@ def check_file_exists(filename):
     :param filename: Name of the file (str).
     :return: None.
     """
-    if os.path.isfile(f"data/{filename}.json") or os.path.isfile(f"data/{filename}.csv"):
+    if os.path.isfile(f"data/{filename}.csv"):
         print("File already exists!")
         while True:
             answer = input("Do you want to overwrite the file? (y/n): ")
@@ -55,31 +55,40 @@ def check_file_exists(filename):
                 sys.exit(0)
 
 
-def request(path, query):
+def date_ago(date, years=0, months=0):
+    """
+    Calculates the date a certain amount of years and months ago.
+
+    :param date: Date (str).
+    :param years: Amount of years (int).
+    :param months: Amount of months (int).
+    :return: New date (str).
+    """
+    new_year = int(date[:4]) - years
+
+    while int(date[5:7]) - months < 1:
+        new_year -= 1
+        months -= 12
+
+    new_month = int(date[5:7]) - months
+
+    return f"{new_year}-{new_month:02d}-{date[8:10]}"
+
+
+def request(path, query, sleep=0.2):
     """
     Sends a get request to the API. The API has a limit of 300 requests per
     minute, so the function sleeps for 0.2 seconds to prevent exceeding the limit.
 
     :param path: Path to the endpoint (str).
     :param query: Query parameters (dict).
+    :param sleep: Time to sleep (float).
     :return: Response from the API (requests.Response).
     """
     response = requests.request("GET", URL + path, headers=HEADERS, params=query)
-    # TODO: 0.2
-    time.sleep(6)  # Prevent exceeding API limit
+    # sleep = 6  # TODO: verwijderen
+    time.sleep(sleep)  # Prevent exceeding API's requests/min limit
     return response
-
-
-def save_data(data, filename):
-    """
-    Saves the data to a json and csv file.
-
-    :param data: Dataframe with the data (pd.DataFrame).
-    :param filename: Name of the file (str).
-    :return: None.
-    """
-    data.to_json(f"data/{filename}.json", orient="records", indent=4)
-    data.to_csv(f"data/{filename}.csv", index=False)
 
 
 def get_fixtures(ids, start_season=2015, end_season=2021):
@@ -100,6 +109,7 @@ def get_fixtures(ids, start_season=2015, end_season=2021):
 
             if response["errors"]:
                 print(f"Error ({league}, {season}): {response['errors']}")
+                return fixtures
             else:
                 new_fixtures = pd.json_normalize(response, record_path=["response"])
                 fixtures = pd.concat([fixtures, new_fixtures])
@@ -119,7 +129,7 @@ def get_fixture_stats():
 
         if response["errors"]:
             print(f"Error (fixture {idx}): {response['errors']}")
-            return stats
+            break
         else:
             new_stats = pd.json_normalize(response,
                                           record_path=["response", "statistics"],
@@ -138,17 +148,18 @@ def get_fixture_h2h():
     fixtures = fixtures[["fixture.id", "teams.home.id", "teams.away.id", "fixture.date"]]
 
     for (idx, home, away, date) in tqdm(fixtures.itertuples(index=False), desc="Fixture h2h"):
+        date = date[:10]  # Only use the date, not the time
         query = {
             "h2h": f"{home}-{away}",
-            "from": "",  # TODO
-            "to": date[:10],  # Only use the date, not the time
-            # Only finished matches (FT = full time, AET = after extra time, PEN = penalty shootout)
-            "status": "FT-AET-PEN"
+            "from": date_ago(date, years=1),  # TODO: check
+            "to": date,
+            "status": "FT"
         }
         response = request("/fixtures/statistics", query).json()
 
         if response["errors"]:
             print(f"Error (fixture {idx}): {response['errors']}")
+            break
         else:
             # TODO
             new_h2h = pd.json_normalize(response,
@@ -181,7 +192,7 @@ def main():
         print(usage_message)
         sys.exit(1)
 
-    save_data(data, filename)
+    data.to_csv(f"data/{filename}.csv", index=False)
 
 
 if __name__ == "__main__":
