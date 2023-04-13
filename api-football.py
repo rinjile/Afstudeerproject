@@ -141,6 +141,43 @@ def get_fixture_stats():
     return stats
 
 
+def get_fixture_player_stats():
+    player_stats = pd.DataFrame()
+
+    fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
+    fixture_ids = fixtures["fixture.id"]
+
+    for idx in tqdm(fixture_ids, desc="Fixture player stats"):
+        query = {"fixture": idx}
+        response = request("/fixtures/players", query).json()
+
+        if response["errors"]:
+            print(f"Error (fixture {idx}): {response['errors']}")
+            break
+        else:
+            new_player_stats = pd.json_normalize(response,
+                                                 record_path=["response", "players", "statistics"],
+                                                 meta=[["response", "players", "player", "id"],
+                                                       ["response", "players", "player", "name"],
+                                                       ["response", "team"]])
+            new_player_stats.insert(0, "fixture.id", idx)
+            player_stats = pd.concat([player_stats, new_player_stats])
+
+    # Convert dict in "response.team" column to separate columns
+    player_stats["team.id"] = player_stats["response.team"].apply(lambda x: x["id"])
+    player_stats["team.name"] = player_stats["response.team"].apply(lambda x: x["name"])
+    player_stats["team.update"] = player_stats["response.team"].apply(lambda x: x["update"])
+    player_stats.drop(columns=["response.team"], inplace=True)
+
+    # Move last 4 columns after the first column
+    cols = player_stats.columns.tolist()
+    cols = cols[:1] + cols[-4:] + cols[1:-4]
+    player_stats = player_stats[cols]
+
+    player_stats.columns = player_stats.columns.str.replace("response.players.", "", regex=False)
+
+    return player_stats
+
 def get_fixture_h2h():
     h2h = pd.DataFrame()
 
@@ -187,7 +224,7 @@ def main():
     elif sys.argv[1] == "-2":
         data = get_fixture_stats()
     elif sys.argv[1] == "-3":
-        data = get_fixture_h2h()
+        data = get_fixture_player_stats()
     else:
         print(usage_message)
         sys.exit(1)
