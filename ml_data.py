@@ -65,10 +65,10 @@ def get_fixture_stats(fixture_stats, fixture_id, team_id, description):
     return stats.reset_index(drop=True)
 
 
-def add_target(targets, row):
-    if row["teams.home.winner"] is True:
+def add_target(targets, home_winner, away_winner):
+    if home_winner is True:
         return pd.concat([targets, pd.Series(1)])
-    elif row["teams.away.winner"] is True:
+    elif away_winner is True:
         return pd.concat([targets, pd.Series(-1)])
     else:
         return pd.concat([targets, pd.Series(0)])
@@ -106,7 +106,7 @@ def create_data_and_targets(fixtures, fixture_stats, n=10):
             continue
 
         data = pd.concat([data, stats], axis=0)
-        targets = add_target(targets, row)
+        targets = add_target(targets, row["teams.home.winner"], row["teams.away.winner"])
 
     return data.reset_index(drop=True), targets.reset_index(drop=True)
 
@@ -115,7 +115,7 @@ def main():
     fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
     # TODO: ["FT", "AET", "PEN"]?
     fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT"])]
-    # fixtures = fixtures.head(200)
+    # fixtures = fixtures.head(120)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
@@ -130,6 +130,7 @@ def main():
         with open("errors.txt", "w") as f:
             for error in ERROR:
                 f.write(error + "\n")
+        print("Errors written to errors.txt")
 
 
 if __name__ == "__main__":
