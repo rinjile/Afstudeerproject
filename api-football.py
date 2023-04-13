@@ -19,6 +19,8 @@ URL = "https://v3.football.api-sports.io"
 API_KEY = list(open(".api_key"))[0].strip()
 HEADERS = {"x-apisports-key": API_KEY}
 
+ERROR = []
+
 
 def read_ids(file):
     """
@@ -160,7 +162,14 @@ def get_fixture_player_stats():
                                                  meta=[["response", "players", "player", "id"],
                                                        ["response", "players", "player", "name"],
                                                        ["response", "team"]])
+            if new_player_stats.shape[0] == 0:
+                ERROR.append(f"Error (fixture {idx}): No player stats found.")
+                continue
+
             new_player_stats.insert(0, "fixture.id", idx)
+            new_player_stats["games.captain"] = new_player_stats["games.captain"].astype(bool)
+            new_player_stats["games.substitute"] = new_player_stats["games.substitute"].astype(bool)
+
             player_stats = pd.concat([player_stats, new_player_stats])
 
     # Convert dict in "response.team" column to separate columns
@@ -177,6 +186,7 @@ def get_fixture_player_stats():
     player_stats.columns = player_stats.columns.str.replace("response.players.", "", regex=False)
 
     return player_stats
+
 
 def get_fixture_h2h():
     h2h = pd.DataFrame()
@@ -230,6 +240,15 @@ def main():
         sys.exit(1)
 
     data.to_csv(f"data/{filename}.csv", index=False)
+
+    if os.path.exists("errors.txt"):
+        os.remove("errors.txt")
+
+    if ERROR:
+        with open("errors.txt", "w") as f:
+            for error in ERROR:
+                f.write(error + "\n")
+        print("Errors written to errors.txt")
 
 
 if __name__ == "__main__":
