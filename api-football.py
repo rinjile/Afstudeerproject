@@ -151,7 +151,13 @@ def get_fixture_player_stats():
 
     for idx in tqdm(fixture_ids, desc="Fixture player stats"):
         query = {"fixture": idx}
-        response = request("/fixtures/players", query).json()
+        response = request("/fixtures/players", query)
+
+        if not response:
+            ERROR.append(f"Error (fixture {idx}): No response.")
+            continue
+
+        response = response.json()
 
         if response["errors"]:
             print(f"Error (fixture {idx}): {response['errors']}")
