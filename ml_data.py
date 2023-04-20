@@ -113,9 +113,11 @@ def create_data_and_targets(fixtures, fixture_stats, n=10):
 
 def main():
     fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
+    # Only use the top 5 leagues
+    fixtures = fixtures[fixtures["league.name"].isin(["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"])]
     # TODO: ["FT", "AET", "PEN"]?
     fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT"])]
-    # fixtures = fixtures.head(120)
+    fixtures = fixtures.head(120)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
