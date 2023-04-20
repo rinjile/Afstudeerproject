@@ -15,11 +15,12 @@ import os
 ERROR = []
 
 
-def get_prev_fixtures(fixtures, fixture_id, team_id, n=1):
+def get_prev_fixtures(fixtures, fixture_id, team_id, n=10):
     fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
     fixture = fixtures[fixtures["fixture.id"] == fixture_id]
     date = fixture["fixture.date"].iloc[0]
 
+    # TODO: met i als fixtures sorted is
     before_fixtures = fixtures[
         ((fixtures["teams.home.id"] == team_id) | (fixtures["teams.away.id"] == team_id)) &
         (fixtures["fixture.date"] < date)
@@ -117,7 +118,11 @@ def main():
     fixtures = fixtures[fixtures["league.name"].isin(["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"])]
     # TODO: ["FT", "AET", "PEN"]?
     fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT"])]
-    fixtures = fixtures.head(120)
+
+    # TODO: sort
+    # fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
+    # fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
+    fixtures = fixtures.head(200)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
