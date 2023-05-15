@@ -15,16 +15,26 @@ import os
 ERROR = []
 
 
-def get_prev_fixtures(fixtures, fixture_id, team_id, n=10):
+def get_prev_fixtures(fixtures, fixture_id, team_id, n, h2h=False):
     fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
     fixture = fixtures[fixtures["fixture.id"] == fixture_id]
     date = fixture["fixture.date"].iloc[0]
 
-    # TODO: met i als fixtures sorted is
-    before_fixtures = fixtures[
-        ((fixtures["teams.home.id"] == team_id) | (fixtures["teams.away.id"] == team_id)) &
-        (fixtures["fixture.date"] < date)
-    ]
+    if h2h:
+        home_id = fixture["teams.home.id"].iloc[0]
+        away_id = fixture["teams.away.id"].iloc[0]
+
+        before_fixtures = fixtures[
+            (fixtures["fixture.date"] < date) &
+            ((fixtures["teams.home.id"] == home_id) & (fixtures["teams.away.id"] == away_id) |
+             (fixtures["teams.home.id"] == away_id) & (fixtures["teams.away.id"] == home_id))
+        ]
+    else:
+        # TODO: met i als fixtures sorted is
+        before_fixtures = fixtures[
+            ((fixtures["teams.home.id"] == team_id) | (fixtures["teams.away.id"] == team_id)) &
+            (fixtures["fixture.date"] < date)
+        ]
 
     # Sort by date in descending order
     before_fixtures = before_fixtures.sort_values(by="fixture.date", ascending=False)
@@ -75,33 +85,38 @@ def add_target(targets, home_winner, away_winner):
         return pd.concat([targets, pd.DataFrame({"home": [0], "draw": [1], "away": [0]})], axis=0)
 
 
-def create_data_and_targets(fixtures, fixture_stats, n=10):
+def create_data_and_targets(fixtures, fixture_stats, n=5):
     # TODO: optimize?
     data = pd.DataFrame()
     targets = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
 
     for (_, row) in tqdm(fixtures.iterrows(), desc="Creating data and targets", total=fixtures.shape[0]):
-        home = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.home.id"], n=n)
-        away = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.away.id"], n=n)
+        home = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.home.id"], n)
+        away = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.away.id"], n)
+        h2h = get_prev_fixtures(fixtures, row["fixture.id"], -1, n, h2h=True)  # team_id is not used when h2h=True
 
         # TODO: missing data
-        if home is None or away is None or home.size != n or away.size != n:
+        if home is None or away is None or h2h is None or home.size != n or away.size != n or h2h.size != n:
             continue
 
         stats = pd.DataFrame()
 
         for i in range(n):
             home_score = get_fixture_score(fixtures, home.iloc[i], f"home {i + 1}")
-            away_score = get_fixture_score(fixtures, away.iloc[i], f"away {i + 1}")
             home_stats = get_fixture_stats(fixture_stats, home.iloc[i], row["teams.home.id"], f"home {i + 1}")
+
+            away_score = get_fixture_score(fixtures, away.iloc[i], f"away {i + 1}")
             away_stats = get_fixture_stats(fixture_stats, away.iloc[i], row["teams.away.id"], f"away {i + 1}")
 
+            h2h_score = get_fixture_score(fixtures, h2h.iloc[i], f"h2h {i + 1}")
+            h2h_stats = get_fixture_stats(fixture_stats, h2h.iloc[i], row["teams.home.id"], f"h2h {i + 1}")
+
             # TODO: missing data
-            if home_stats is None or away_stats is None:
+            if home_stats is None or away_stats is None or h2h_stats is None:
                 stats = pd.DataFrame()
                 break
 
-            stats = pd.concat([stats, home_score, home_stats, away_score, away_stats], axis=1)
+            stats = pd.concat([stats, home_score, home_stats, away_score, away_stats, h2h_score, h2h_stats], axis=1)
 
         if stats.shape[0] == 0:
             continue
@@ -122,7 +137,7 @@ def main():
     # TODO: sort
     # fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
     # fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
-    fixtures = fixtures.head(200)
+    fixtures = fixtures.head(1000)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
