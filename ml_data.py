@@ -68,17 +68,17 @@ def get_fixture_stats(fixture_stats, fixture_id, team_id, description):
 
 def add_target(targets, home_winner, away_winner):
     if home_winner is True:
-        return pd.concat([targets, pd.Series(1)])
+        return pd.concat([targets, pd.DataFrame({"home": [1], "draw": [0], "away": [0]})], axis=0)
     elif away_winner is True:
-        return pd.concat([targets, pd.Series(-1)])
+        return pd.concat([targets, pd.DataFrame({"home": [0], "draw": [0], "away": [1]})], axis=0)
     else:
-        return pd.concat([targets, pd.Series(0)])
+        return pd.concat([targets, pd.DataFrame({"home": [0], "draw": [1], "away": [0]})], axis=0)
 
 
 def create_data_and_targets(fixtures, fixture_stats, n=10):
     # TODO: optimize?
     data = pd.DataFrame()
-    targets = pd.Series(name="winner", dtype=int)
+    targets = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
 
     for (_, row) in tqdm(fixtures.iterrows(), desc="Creating data and targets", total=fixtures.shape[0]):
         home = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.home.id"], n=n)

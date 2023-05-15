@@ -8,9 +8,9 @@ Description:
 TODO
 """
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier
 from sklearn.neural_network import MLPClassifier
@@ -21,12 +21,24 @@ from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.multioutput import MultiOutputClassifier
+from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
 
 
-def predict(data, targets, n=10, train_size=0.8):
-    # X_train, X_test, y_train, y_test = train_test_split(data, targets, test_size=0.2, random_state=42)
-    # y_test.reset_index(drop=True, inplace=True)
+def prob2target(prob):
+    for i, row in prob.iterrows():
+        max_prob = max(row)
 
+        if row.value_counts()[max_prob] > 1:
+            max_indices = np.where(row == max_prob)[0]
+            prob.iloc[i] = [0, 0, 0]
+            prob.iloc[i][np.random.choice(max_indices)] = 1
+        else:
+            prob.iloc[i] = [1 if p == max_prob else 0 for p in row]
+
+    return prob.astype(int)
+
+
+def prediction(data, targets, n=10, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -37,19 +49,19 @@ def predict(data, targets, n=10, train_size=0.8):
 
     models = [
         LogisticRegression(max_iter=10**4),
-        SGDClassifier(),
-        RidgeClassifier(),
+        # SGDClassifier(),
+        # RidgeClassifier(),
         GaussianNB(),
         BernoulliNB(),
-        MultinomialNB(),
-        ComplementNB(),
+        # MultiOutputClassifier(MultinomialNB()),
+        # MultiOutputClassifier(ComplementNB()),
         KNeighborsClassifier(),
-        SVC(),
-        GaussianProcessClassifier(),
+        # SVC(),
+        # MultiOutputClassifier(GaussianProcessClassifier()),
         DecisionTreeClassifier(),
-        ExtraTreeClassifier(),
+        # ExtraTreeClassifier(),
         RandomForestClassifier(),
-        AdaBoostClassifier(),
+        # MultiOutputClassifier(AdaBoostClassifier()),
         MLPClassifier(max_iter=10**4)
     ]
     # models = [
@@ -65,19 +77,17 @@ def predict(data, targets, n=10, train_size=0.8):
     accuracies = []
 
     for model in tqdm(models, desc="Predicting with the models"):
+        model_name = model.__class__.__name__
+        model = OneVsRestClassifier(model)
         accuracy_sum = 0
 
         for _ in tqdm(range(n), leave=False, desc="Repeating"):
             model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
+            y_pred_prob = model.predict_proba(X_test)
+            y_pred = prob2target(pd.DataFrame(y_pred_prob))
             accuracy_sum += accuracy_score(y_test, y_pred)
 
-            # model.fit(X_train, y_train)
-            # y_pred = pd.DataFrame(model.predict(X_test))
-            # correct = (y_test == y_pred).all(axis=1).sum()
-            # accuracy_sum += correct / y_test.shape[0]
-
-        accuracies.append((model.__class__.__name__, accuracy_sum / n))
+        accuracies.append((model_name, accuracy_sum / n))
 
     return accuracies
 
@@ -86,7 +96,8 @@ def main():
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     targets = pd.read_csv("data/targets.csv", low_memory=False, header=None)
 
-    accuracies = predict(data, targets[0])
+    accuracies = prediction(data, targets)
+    accuracies = sorted(accuracies, key=lambda x: x[1], reverse=True)
 
     print("Accuracy:")
     for (model, accuracy) in accuracies:
