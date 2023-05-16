@@ -11,6 +11,7 @@ TODO
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import os
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier
 from sklearn.neural_network import MLPClassifier
@@ -49,10 +50,9 @@ def prediction(data, targets, train_size=0.8):
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        (LogisticRegression(),
+        (LogisticRegression(max_iter=10**4),
          {"estimator__C": [0.1, 1, 10, 100],
-          "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"],
-          "estimator__max_iter": [100, 1000, 10000],
+          "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
           }),
         (GaussianNB(),
          {}),
@@ -88,7 +88,7 @@ def prediction(data, targets, train_size=0.8):
 
     accuracies = []
 
-    for model, params in tqdm(models, desc="Predicting with the models"):
+    for (model, params) in tqdm(models, desc="Predicting with the models"):
         model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
 
         model.fit(X_train, y_train)
@@ -103,15 +103,22 @@ def prediction(data, targets, train_size=0.8):
 
 
 def main():
+    filename = input("Filename of the accuracies: ")
+
+    while os.path.exists(f"data/{filename}.txt"):
+        filename = input("Filename already exists, choose another: ")
+
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     targets = pd.read_csv("data/targets.csv", low_memory=False, header=None)
+    # data = data.head(50)
+    # targets = targets.head(50)
 
     accuracies = prediction(data, targets)
     accuracies = sorted(accuracies, key=lambda x: x[1], reverse=True)
 
-    print("Accuracy:")
-    for (model, accuracy) in accuracies:
-        print(f"- {model}: {accuracy * 100:.2f} %")
+    with open(f"data/{filename}.txt", "w") as f:
+        for (model, accuracy) in accuracies:
+            f.write(f"{model}: {accuracy * 100:.2f} %\n")
 
 
 if __name__ == "__main__":
