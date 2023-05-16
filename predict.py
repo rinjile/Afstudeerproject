@@ -22,6 +22,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
+from sklearn.model_selection import GridSearchCV
 
 
 def prob2target(prob):
@@ -38,7 +39,7 @@ def prob2target(prob):
     return prob.astype(int)
 
 
-def prediction(data, targets, n=10, train_size=0.8):
+def prediction(data, targets, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -48,21 +49,32 @@ def prediction(data, targets, n=10, train_size=0.8):
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        LogisticRegression(max_iter=10**4),
+        (LogisticRegression(),
+         {"estimator__C": [0.1, 1, 10, 100],
+          "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"],
+          "estimator__max_iter": [100, 1000, 10000],
+          }),
+        (GaussianNB(),
+         {}),
+        (BernoulliNB(),
+         {}),
+        (KNeighborsClassifier(),
+         {}),
+        (SVC(probability=True),
+         {}),
+        (MLPClassifier(max_iter=10**4),
+         {}),
+        (DecisionTreeClassifier(),
+         {}),
+        (RandomForestClassifier(),
+         {})
         # SGDClassifier(),
         # RidgeClassifier(),
-        GaussianNB(),
-        BernoulliNB(),
         # MultiOutputClassifier(MultinomialNB()),
         # MultiOutputClassifier(ComplementNB()),
-        KNeighborsClassifier(),
-        # SVC(),
         # MultiOutputClassifier(GaussianProcessClassifier()),
-        DecisionTreeClassifier(),
         # ExtraTreeClassifier(),
-        RandomForestClassifier(),
         # MultiOutputClassifier(AdaBoostClassifier()),
-        MLPClassifier(max_iter=10**4)
     ]
     # models = [
     #     RandomForestClassifier(),
@@ -76,18 +88,16 @@ def prediction(data, targets, n=10, train_size=0.8):
 
     accuracies = []
 
-    for model in tqdm(models, desc="Predicting with the models"):
-        model_name = model.__class__.__name__
-        model = OneVsRestClassifier(model)
-        accuracy_sum = 0
+    for model, params in tqdm(models, desc="Predicting with the models"):
+        model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
 
-        for _ in tqdm(range(n), leave=False, desc="Repeating"):
-            model.fit(X_train, y_train)
-            y_pred_prob = model.predict_proba(X_test)
-            y_pred = prob2target(pd.DataFrame(y_pred_prob))
-            accuracy_sum += accuracy_score(y_test, y_pred)
+        model.fit(X_train, y_train)
+        y_pred_prob = model.best_estimator_.predict_proba(X_test)
 
-        accuracies.append((model_name, accuracy_sum / n))
+        y_pred = prob2target(pd.DataFrame(y_pred_prob))
+
+        accuracy = accuracy_score(y_test, y_pred)
+        accuracies.append((model.best_estimator_.estimator, accuracy))
 
     return accuracies
 
