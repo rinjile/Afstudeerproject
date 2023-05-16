@@ -69,6 +69,10 @@ def get_fixture_stats(fixture_stats, fixture_id, team_id, description):
 
     # Convert percentages to floats
     stats["Ball Possession"] = stats["Ball Possession"].str.replace("%", "").astype(float) / 100
+
+    if "Passes %" not in stats.columns:
+        return None
+
     stats["Passes %"] = stats["Passes %"].str.replace("%", "").astype(float) / 100
 
     stats.columns = [f"{col} ({description})" for col in stats.columns]
@@ -137,7 +141,7 @@ def main():
     # TODO: sort
     # fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
     # fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
-    fixtures = fixtures.head(1000)
+    # fixtures = fixtures.head(1000)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
