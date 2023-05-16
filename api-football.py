@@ -224,7 +224,7 @@ def get_fixture_h2h():
 
 
 def main():
-    usage_message = "Usage: python3 api-football.py -1/-2/-3 <filename>"
+    usage_message = "Usage: python3 api-football.py -1/-2/-3 <file name>"
 
     if len(sys.argv) != 3:
         print(usage_message)

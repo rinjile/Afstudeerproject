@@ -103,10 +103,10 @@ def prediction(data, targets, train_size=0.8):
 
 
 def main():
-    filename = input("Filename of the accuracies: ")
+    filename = input("File name of the accuracies: ")
 
     while os.path.exists(f"data/{filename}.txt"):
-        filename = input("Filename already exists, choose another: ")
+        filename = input("File name already exists, choose another: ")
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     targets = pd.read_csv("data/targets.csv", low_memory=False, header=None)
