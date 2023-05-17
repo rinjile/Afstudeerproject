@@ -109,7 +109,7 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
         home, away = get_last_fixtures(fixtures.head(i), row, n)
         h2h = get_last_h2h_fixtures(fixtures.head(i), row, n)
 
-        if None in [home, away, h2h]:
+        if home is None or away is None or h2h is None:
             continue
 
         stats = pd.DataFrame()
@@ -124,7 +124,7 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
             h2h_score = get_fixture_score(fixtures, h2h.iloc[j], f"h2h {j + 1}")
             h2h_stats = get_fixture_stats(fixture_stats, h2h.iloc[j], row["teams.home.id"], f"h2h {j + 1}")
 
-            if None in [home_stats, away_stats, h2h_stats]:
+            if home_stats is None or away_stats is None or h2h_stats is None:
                 stats = pd.DataFrame()
                 break
 
@@ -149,7 +149,7 @@ def main():
 
     fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
     fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
-    # fixtures = fixtures.head(2000)
+    # fixtures = fixtures.head(3200)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
