@@ -104,7 +104,7 @@ def main():
         filename = input("File name already exists, choose another: ")
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
-    targets = pd.read_csv("data/targets.csv", low_memory=False, header=None)
+    targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False, header=None)
     # data = data.head(50)
     # targets = targets.head(50)
 
