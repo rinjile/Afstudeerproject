@@ -40,7 +40,7 @@ def prob2target(prob):
     return prob.astype(int)
 
 
-def prediction(data, targets, train_size=0.8):
+def prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -83,16 +83,19 @@ def prediction(data, targets, train_size=0.8):
     accuracies = []
 
     for (model, params) in tqdm(models, desc="Predicting with the models"):
-        model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
+        if hyperparams_tuning:
+            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
+            model.fit(X_train, y_train)
+            model = model.best_estimator_
+        else:
+            model = OneVsRestClassifier(model)
+            model.fit(X_train, y_train)
 
-        model.fit(X_train, y_train)
-        best_model = model.best_estimator_
-        y_pred_prob = best_model.predict_proba(X_test)
-
+        y_pred_prob = model.predict_proba(X_test)
         y_pred = prob2target(pd.DataFrame(y_pred_prob))
 
         accuracy = accuracy_score(y_test, y_pred)
-        accuracies.append((best_model.estimator, accuracy))
+        accuracies.append((model.estimator, accuracy))
 
     return accuracies
 
