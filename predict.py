@@ -69,7 +69,7 @@ def prob2target(prob):
     return prob.astype(int)
 
 
-def classification_prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
+def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -97,7 +97,7 @@ def classification_prediction(data, targets, train_size=0.8, hyperparams_tuning=
          {}),
         (SVC(probability=True),
          {}),
-        (MLPClassifier(max_iter=10**4),
+        (MLPClassifier(max_iter=10**4),  # To prevent ConvergenceWarning
          {}),
         (DecisionTreeClassifier(),
          {}),
@@ -112,7 +112,7 @@ def classification_prediction(data, targets, train_size=0.8, hyperparams_tuning=
 
     accuracies = []
 
-    for (model, params) in tqdm(models, desc="Predicting with the models"):
+    for (model, params) in tqdm(models, desc="Predicting the result (classification)"):
         if hyperparams_tuning:
             model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
             model.fit(X_train, y_train)
@@ -130,16 +130,16 @@ def classification_prediction(data, targets, train_size=0.8, hyperparams_tuning=
     return accuracies
 
 
-def classification(data):
+def classification(data, hyperparams_tuning):
     targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False, header=None)
     # data = data.head(50)
     # targets = targets.head(50)
 
-    accuracies = classification_prediction(data, targets, hyperparams_tuning=True)
+    accuracies = classification_prediction(data, targets, hyperparams_tuning)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
-def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
+def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -162,7 +162,7 @@ def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True
 
     accuracies = []
 
-    for (model, params) in tqdm(models, desc="Predicting with the models"):
+    for (model, params) in tqdm(models, desc="Predicting the score (regression)"):
         if hyperparams_tuning:
             model = GridSearchCV(model, params, cv=5, scoring="accuracy")
             model.fit(X_train, y_train)
@@ -184,32 +184,36 @@ def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True
     return accuracies
 
 
-def regression(data):
+def regression(data, hyperparams_tuning):
     targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False, header=None)
     # data = data.head(500)
     # targets = targets.head(500)
 
-    accuracies = regression_prediction(data, targets, hyperparams_tuning=True)
+    accuracies = regression_prediction(data, targets, hyperparams_tuning)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python3 predict.py <file name>")
+    if len(sys.argv) < 2:
+        print("Usage: python3 predict.py <file name> [--notuning]")
         sys.exit(1)
 
     filename = sys.argv[1]
     check_file_exists(filename)
 
+    hyperparams_tuning = True
+    if len(sys.argv) > 2 and sys.argv[2] == "--notuning":
+        hyperparams_tuning = False
+
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
-    classification_accuracies = classification(data)
-    regression_accuracies = regression(data)
+    classification_accuracies = classification(data, hyperparams_tuning)
+    regression_accuracies = regression(data, hyperparams_tuning)
 
     with open(f"data/{filename}.txt", "w") as f:
         for (model, accuracy) in classification_accuracies:
             f.write(f"{model}: {accuracy * 100:.2f} %\n")
 
-        print("\n")
+        f.write("\n")
 
         for (model, accuracy) in regression_accuracies:
             f.write(f"{model}: {accuracy * 100:.2f} %\n")
