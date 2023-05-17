@@ -50,15 +50,20 @@ def prediction(data, targets, train_size=0.8):
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        (LogisticRegression(max_iter=10**4),
-         {"estimator__C": [0.1, 1, 10, 100],
-          "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
+        (LogisticRegression(max_iter=10**4),  # To prevent ConvergenceWarning
+         {
+             "estimator__C": [0.1, 1, 10, 100],
+             "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
           }),
         (GaussianNB(),
          {}),
         (BernoulliNB(),
          {}),
+        (MultinomialNB(),
+         {}),
         (KNeighborsClassifier(),
+         {}),
+        (SGDClassifier(loss="log_loss"),
          {}),
         (SVC(probability=True),
          {}),
@@ -68,23 +73,12 @@ def prediction(data, targets, train_size=0.8):
          {}),
         (RandomForestClassifier(),
          {})
-        # SGDClassifier(),
-        # RidgeClassifier(),
-        # MultiOutputClassifier(MultinomialNB()),
-        # MultiOutputClassifier(ComplementNB()),
         # MultiOutputClassifier(GaussianProcessClassifier()),
+        # RidgeClassifier(),
+        # MultiOutputClassifier(ComplementNB()),
         # ExtraTreeClassifier(),
         # MultiOutputClassifier(AdaBoostClassifier()),
     ]
-    # models = [
-    #     RandomForestClassifier(),
-    #     MultiOutputClassifier(GaussianNB()),
-    #     KNeighborsClassifier(),
-    #     DecisionTreeClassifier(),
-    #     RandomForestClassifier(),
-    #     MultiOutputClassifier(MLPClassifier(max_iter=10**4)),
-    #     MultiOutputClassifier(AdaBoostClassifier()),
-    # ]
 
     accuracies = []
 
@@ -92,12 +86,13 @@ def prediction(data, targets, train_size=0.8):
         model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
 
         model.fit(X_train, y_train)
-        y_pred_prob = model.best_estimator_.predict_proba(X_test)
+        best_model = model.best_estimator_
+        y_pred_prob = best_model.predict_proba(X_test)
 
         y_pred = prob2target(pd.DataFrame(y_pred_prob))
 
         accuracy = accuracy_score(y_test, y_pred)
-        accuracies.append((model.best_estimator_.estimator, accuracy))
+        accuracies.append((best_model.estimator, accuracy))
 
     return accuracies
 
