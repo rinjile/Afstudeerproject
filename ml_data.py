@@ -15,34 +15,44 @@ import os
 ERROR = []
 
 
-def get_prev_fixtures(fixtures, fixture_id, team_id, n, h2h=False):
-    fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
-    fixture = fixtures[fixtures["fixture.id"] == fixture_id]
-    date = fixture["fixture.date"].iloc[0]
+def get_last_fixtures(fixtures, fixture, n):
+    home_id = fixture["teams.home.id"]
+    away_id = fixture["teams.away.id"]
 
-    if h2h:
-        home_id = fixture["teams.home.id"].iloc[0]
-        away_id = fixture["teams.away.id"].iloc[0]
-
-        before_fixtures = fixtures[
-            (fixtures["fixture.date"] < date) &
-            ((fixtures["teams.home.id"] == home_id) & (fixtures["teams.away.id"] == away_id) |
-             (fixtures["teams.home.id"] == away_id) & (fixtures["teams.away.id"] == home_id))
-        ]
-    else:
-        # TODO: met i als fixtures sorted is
-        before_fixtures = fixtures[
-            ((fixtures["teams.home.id"] == team_id) | (fixtures["teams.away.id"] == team_id)) &
-            (fixtures["fixture.date"] < date)
+    last_fixtures_home = fixtures[
+        (fixtures["teams.home.id"] == home_id) | (fixtures["teams.away.id"] == home_id)
+    ]
+    last_fixtures_away = fixtures[
+        (fixtures["teams.home.id"] == away_id) | (fixtures["teams.away.id"] == away_id)
         ]
 
     # Sort by date in descending order
-    before_fixtures = before_fixtures.sort_values(by="fixture.date", ascending=False)
+    last_fixtures_home = last_fixtures_home.sort_values(by="fixture.date", ascending=False)
+    last_fixtures_away = last_fixtures_away.sort_values(by="fixture.date", ascending=False)
 
-    if before_fixtures.shape[0] > 0:
-        return before_fixtures.head(n)["fixture.id"].reset_index(drop=True)
+    if last_fixtures_home.shape[0] < n or last_fixtures_away.shape[0] < n:
+        return None, None
 
-    return None
+    return (last_fixtures_home.head(n)["fixture.id"].reset_index(drop=True),
+            last_fixtures_away.head(n)["fixture.id"].reset_index(drop=True))
+
+
+def get_last_h2h_fixtures(fixtures, fixture, n):
+    home_id = fixture["teams.home.id"]
+    away_id = fixture["teams.away.id"]
+
+    last_fixtures = fixtures[
+        ((fixtures["teams.home.id"] == home_id) & (fixtures["teams.away.id"] == away_id)) |
+        ((fixtures["teams.home.id"] == away_id) & (fixtures["teams.away.id"] == home_id))
+    ]
+
+    # Sort by date in descending order
+    last_fixtures = last_fixtures.sort_values(by="fixture.date", ascending=False)
+
+    if last_fixtures.shape[0] < n:
+        return None
+
+    return last_fixtures.head(n)["fixture.id"].reset_index(drop=True)
 
 
 def get_fixture_score(fixtures, fixture_id, description):
@@ -95,29 +105,26 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
     targets_result = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
     targets_score = pd.DataFrame(columns=["home", "away"], dtype=int)
 
-    for (_, row) in tqdm(fixtures.iterrows(), desc="Creating data and targets", total=fixtures.shape[0]):
-        home = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.home.id"], n)
-        away = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.away.id"], n)
-        h2h = get_prev_fixtures(fixtures, row["fixture.id"], -1, n, h2h=True)  # team_id is not used when h2h=True
+    for (i, row) in tqdm(fixtures.iterrows(), desc="Creating data and targets", total=fixtures.shape[0]):
+        home, away = get_last_fixtures(fixtures.head(i), row, n)
+        h2h = get_last_h2h_fixtures(fixtures.head(i), row, n)
 
-        # TODO: missing data
-        if home is None or away is None or h2h is None or home.size != n or away.size != n or h2h.size != n:
+        if None in [home, away, h2h]:
             continue
 
         stats = pd.DataFrame()
 
-        for i in range(n):
-            home_score = get_fixture_score(fixtures, home.iloc[i], f"home {i + 1}")
-            home_stats = get_fixture_stats(fixture_stats, home.iloc[i], row["teams.home.id"], f"home {i + 1}")
+        for j in range(n):
+            home_score = get_fixture_score(fixtures, home.iloc[j], f"home {j + 1}")
+            home_stats = get_fixture_stats(fixture_stats, home.iloc[j], row["teams.home.id"], f"home {j + 1}")
 
-            away_score = get_fixture_score(fixtures, away.iloc[i], f"away {i + 1}")
-            away_stats = get_fixture_stats(fixture_stats, away.iloc[i], row["teams.away.id"], f"away {i + 1}")
+            away_score = get_fixture_score(fixtures, away.iloc[j], f"away {j + 1}")
+            away_stats = get_fixture_stats(fixture_stats, away.iloc[j], row["teams.away.id"], f"away {j + 1}")
 
-            h2h_score = get_fixture_score(fixtures, h2h.iloc[i], f"h2h {i + 1}")
-            h2h_stats = get_fixture_stats(fixture_stats, h2h.iloc[i], row["teams.home.id"], f"h2h {i + 1}")
+            h2h_score = get_fixture_score(fixtures, h2h.iloc[j], f"h2h {j + 1}")
+            h2h_stats = get_fixture_stats(fixture_stats, h2h.iloc[j], row["teams.home.id"], f"h2h {j + 1}")
 
-            # TODO: missing data
-            if home_stats is None or away_stats is None or h2h_stats is None:
+            if None in [home_stats, away_stats, h2h_stats]:
                 stats = pd.DataFrame()
                 break
 
@@ -140,10 +147,9 @@ def main():
     # TODO: ["FT", "AET", "PEN"]?
     fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT"])]
 
-    # TODO: sort
-    # fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
-    # fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
-    # fixtures = fixtures.head(1000)
+    fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
+    fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
+    # fixtures = fixtures.head(2000)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
