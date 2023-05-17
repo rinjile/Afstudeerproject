@@ -92,7 +92,8 @@ def add_target(targets, home_winner, away_winner):
 def create_data_and_targets(fixtures, fixture_stats, n=5):
     # TODO: optimize?
     data = pd.DataFrame()
-    targets = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
+    targets_result = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
+    targets_score = pd.DataFrame(columns=["home", "away"], dtype=int)
 
     for (_, row) in tqdm(fixtures.iterrows(), desc="Creating data and targets", total=fixtures.shape[0]):
         home = get_prev_fixtures(fixtures, row["fixture.id"], row["teams.home.id"], n)
@@ -126,9 +127,10 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
             continue
 
         data = pd.concat([data, stats], axis=0)
-        targets = add_target(targets, row["teams.home.winner"], row["teams.away.winner"])
+        targets_result = add_target(targets_result, row["teams.home.winner"], row["teams.away.winner"])
+        targets_score = pd.concat([targets_score, pd.DataFrame({"home": [row["goals.home"]], "away": [row["goals.away"]]})], axis=0)
 
-    return data.reset_index(drop=True), targets.reset_index(drop=True)
+    return data.reset_index(drop=True), targets_result.reset_index(drop=True), targets_score.reset_index(drop=True).astype(int)
 
 
 def main():
@@ -145,9 +147,10 @@ def main():
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
-    data, targets = create_data_and_targets(fixtures, fixture_stats)
+    data, targets_result, targets_score = create_data_and_targets(fixtures, fixture_stats)
     data.to_csv("data/ml_data.csv", index=False)
-    targets.to_csv("data/targets.csv", index=False, header=False)
+    targets_result.to_csv("data/ml_targets_result.csv", index=False, header=False)
+    targets_score.to_csv("data/ml_targets_score.csv", index=False, header=False)
 
     if os.path.exists("errors.txt"):
         os.remove("errors.txt")
