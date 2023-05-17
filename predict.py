@@ -40,7 +40,7 @@ def prob2target(prob):
     return prob.astype(int)
 
 
-def prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
+def classification_prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -100,6 +100,45 @@ def prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
     return accuracies
 
 
+def classification(data):
+    targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False, header=None)
+    # data = data.head(50)
+    # targets = targets.head(50)
+
+    accuracies = classification_prediction(data, targets)
+    return sorted(accuracies, key=lambda x: x[1], reverse=True)
+
+
+def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True):
+    train_len = int(data.shape[0] * train_size)
+
+    X_train = data.iloc[:train_len]
+    X_test = data.iloc[train_len:]
+    y_train = targets.iloc[:train_len]
+    y_test = targets.iloc[train_len:]
+    y_test.reset_index(drop=True, inplace=True)
+
+    models = [
+
+    ]
+
+    accuracies = []
+
+    for (model, params) in tqdm(models, desc="Predicting with the models"):
+        pass
+
+    return accuracies
+
+
+def regression(data):
+    targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False, header=None)
+    # data = data.head(50)
+    # targets = targets.head(50)
+
+    accuracies = regression_prediction(data, targets)
+    return sorted(accuracies, key=lambda x: x[1], reverse=True)
+
+
 def main():
     filename = input("File name of the accuracies: ")
 
@@ -107,15 +146,16 @@ def main():
         filename = input("File name already exists, choose another: ")
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
-    targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False, header=None)
-    # data = data.head(50)
-    # targets = targets.head(50)
-
-    accuracies = prediction(data, targets)
-    accuracies = sorted(accuracies, key=lambda x: x[1], reverse=True)
+    classification_accuracies = classification(data)
+    regression_accuracies = regression(data)
 
     with open(f"data/{filename}.txt", "w") as f:
-        for (model, accuracy) in accuracies:
+        for (model, accuracy) in classification_accuracies:
+            f.write(f"{model}: {accuracy * 100:.2f} %\n")
+
+        print("\n")
+
+        for (model, accuracy) in regression_accuracies:
             f.write(f"{model}: {accuracy * 100:.2f} %\n")
 
 
