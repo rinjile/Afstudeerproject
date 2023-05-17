@@ -13,7 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 import os
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier
+from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, LinearRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -24,6 +24,16 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, Compleme
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
 from sklearn.model_selection import GridSearchCV
+
+
+def my_accuracy_score(y_true, y_pred):
+    correct = 0
+
+    for i, row in y_pred.iterrows():
+        if row.equals(y_true.iloc[i]):
+            correct += 1
+
+    return correct / y_pred.shape[0]
 
 
 def prob2target(prob):
@@ -105,7 +115,7 @@ def classification(data):
     # data = data.head(50)
     # targets = targets.head(50)
 
-    accuracies = classification_prediction(data, targets)
+    accuracies = classification_prediction(data, targets, hyperparams_tuning=True)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
@@ -119,23 +129,39 @@ def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-
+        (LinearRegression(),
+         {})
     ]
 
     accuracies = []
 
     for (model, params) in tqdm(models, desc="Predicting with the models"):
-        pass
+        if hyperparams_tuning:
+            model = GridSearchCV(model, params, cv=5, scoring="accuracy")
+            model.fit(X_train, y_train)
+            model = model.best_estimator_
+        else:
+            model.fit(X_train, y_train)
+
+        y_pred = pd.DataFrame(model.predict(X_test))
+
+        # Round to the nearest integer
+        y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5 else np.ceil(x)).astype(int)
+        # Set negative values to 0
+        y_pred = y_pred.applymap(lambda x: 0 if x < 0 else x)
+
+        accuracy = my_accuracy_score(y_test, y_pred)
+        accuracies.append((model, accuracy))
 
     return accuracies
 
 
 def regression(data):
     targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False, header=None)
-    # data = data.head(50)
-    # targets = targets.head(50)
+    # data = data.head(500)
+    # targets = targets.head(500)
 
-    accuracies = regression_prediction(data, targets)
+    accuracies = regression_prediction(data, targets, hyperparams_tuning=True)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
