@@ -11,19 +11,38 @@ TODO
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import sys
 import os
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, LinearRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, LinearRegression, SGDRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingRegressor
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
-from sklearn.multioutput import MultiOutputClassifier
+from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
 from sklearn.model_selection import GridSearchCV
+
+
+def check_file_exists(filename):
+    """
+    Checks if the file already exists. If it does, the user is asked to
+    overwrite the file or not.
+
+    :param filename: Name of the file (str).
+    :return: None.
+    """
+    if os.path.isfile(f"data/{filename}.txt"):
+        print("File already exists!")
+        while True:
+            answer = input("Do you want to overwrite the file? (y/n): ")
+            if answer == "y":
+                break
+            elif answer == "n":
+                sys.exit(0)
 
 
 def my_accuracy_score(y_true, y_pred):
@@ -59,6 +78,7 @@ def classification_prediction(data, targets, train_size=0.8, hyperparams_tuning=
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
+    # TODO: params
     models = [
         (LogisticRegression(max_iter=10**4),  # To prevent ConvergenceWarning
          {
@@ -128,8 +148,15 @@ def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
+    # TODO: params
     models = [
         (LinearRegression(),
+         {}),
+        (SVR(),
+         {}),
+        (SGDRegressor(),
+         {}),
+        (GradientBoostingRegressor(),
          {})
     ]
 
@@ -141,6 +168,7 @@ def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
+            model = MultiOutputRegressor(model)
             model.fit(X_train, y_train)
 
         y_pred = pd.DataFrame(model.predict(X_test))
@@ -151,7 +179,7 @@ def regression_prediction(data, targets, train_size=0.8, hyperparams_tuning=True
         y_pred = y_pred.applymap(lambda x: 0 if x < 0 else x)
 
         accuracy = my_accuracy_score(y_test, y_pred)
-        accuracies.append((model, accuracy))
+        accuracies.append((model.estimator, accuracy))
 
     return accuracies
 
@@ -166,10 +194,12 @@ def regression(data):
 
 
 def main():
-    filename = input("File name of the accuracies: ")
+    if len(sys.argv) != 2:
+        print("Usage: python3 predict.py <file name>")
+        sys.exit(1)
 
-    while os.path.exists(f"data/{filename}.txt"):
-        filename = input("File name already exists, choose another: ")
+    filename = sys.argv[1]
+    check_file_exists(filename)
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     classification_accuracies = classification(data)
