@@ -24,7 +24,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, Gradien
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, LearningCurveDisplay, learning_curve, ShuffleSplit
 
 
 def check_file_exists(filename):
@@ -69,6 +69,27 @@ def prob2target(prob):
     return prob.astype(int)
 
 
+def save_learning_curve(model, learning_curve_params, ci=95):
+    # TODO: verbose?
+    train_sizes, train_scores, test_scores = learning_curve(model, **learning_curve_params)
+    train_ci_lower = np.percentile(train_scores, (100 - ci) / 2, axis=1)
+    train_ci_upper = np.percentile(train_scores, (100 + ci) / 2, axis=1)
+    test_ci_lower = np.percentile(test_scores, (100 - ci) / 2, axis=1)
+    test_ci_upper = np.percentile(test_scores, (100 + ci) / 2, axis=1)
+
+    with open(f"results/learning_curve_{model.estimator.__class__.__name__}.csv", "w") as f:
+        f.write(f"train_size,train_mean,train_ci_lower,train_ci_upper,test_mean,test_ci_lower,test_ci_upper\n")
+
+        for i in range(train_sizes.shape[0]):
+            f.write(f"{train_sizes[i]},"
+                    f"{train_scores[i].mean()},"
+                    f"{train_ci_lower[i]},"
+                    f"{train_ci_upper[i]},"
+                    f"{test_scores[i].mean()},"
+                    f"{test_ci_lower[i]},"
+                    f"{test_ci_upper[i]}\n")
+
+
 def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
@@ -84,17 +105,34 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
          {
              "estimator__C": [0.1, 1, 10, 100],
              "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
-          }),
+         }),
         (GaussianNB(),
-         {}),
-        (BernoulliNB(),
-         {}),
+         {}),  # No hyperparameters to tune
+        (BernoulliNB(),  # Boolean features (TODO: deze doen?)
+         {
+                "estimator__alpha": [0.1, 0.5, 1, 2, 5],
+         }),
         (MultinomialNB(),
-         {}),
+         {
+             "estimator__alpha": [0.1, 0.5, 1, 2, 5],
+             "estimator__fit_prior": [True, False],
+             "estimator__class_prior": [None, [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.5, 0.5]]
+         }),
         (KNeighborsClassifier(),
-         {}),
-        (SGDClassifier(loss="log_loss"),
-         {}),
+         {
+             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
+             "estimator__weights": ["uniform", "distance"],
+             # "estimator__algorithm": ["ball_tree", "kd_tree", "brute"],
+             # "estimator__leaf_size": [10, 20, 30, 40, 50],
+             "estimator__p": [1, 2, 3]
+         }),
+        (SGDClassifier(loss="log_loss"),  # TODO: checken
+         {
+             "estimator__penalty": ["l2", "l1", "elasticnet"],
+             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1, 2, 5],
+             "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
+             "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
+         }),
         (SVC(probability=True),
          {}),
         (MLPClassifier(max_iter=10**4),  # To prevent ConvergenceWarning
@@ -103,18 +141,27 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
          {}),
         (RandomForestClassifier(),
          {})
-        # MultiOutputClassifier(GaussianProcessClassifier()),
+
+        # GaussianProcessClassifier(),
         # RidgeClassifier(),
-        # MultiOutputClassifier(ComplementNB()),
+        # ComplementNB(),
         # ExtraTreeClassifier(),
-        # MultiOutputClassifier(AdaBoostClassifier()),
+        # AdaBoostClassifier(),
     ]
+
+    learning_curve_params = {
+        "X": data,
+        "y": targets,
+        "train_sizes": np.linspace(0.1, 1.0, 10),
+        "cv": ShuffleSplit(n_splits=5, test_size=0.2, random_state=10),
+        # "n_jobs": 4,
+    }
 
     accuracies = []
 
     for (model, params) in tqdm(models, desc="Predicting the result (classification)"):
         if hyperparams_tuning:
-            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy")
+            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy", verbose=3)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -126,6 +173,8 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
 
         accuracy = accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
+
+        save_learning_curve(model, learning_curve_params)
 
     return accuracies
 
@@ -164,7 +213,8 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
 
     for (model, params) in tqdm(models, desc="Predicting the score (regression)"):
         if hyperparams_tuning:
-            model = GridSearchCV(model, params, cv=5, scoring="accuracy")
+            # TODO: error
+            model = GridSearchCV(model, params, cv=5, scoring="accuracy", verbose=3)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -211,12 +261,12 @@ def main():
 
     with open(f"data/{filename}.txt", "w") as f:
         for (model, accuracy) in classification_accuracies:
-            f.write(f"{model}: {accuracy * 100:.2f} %\n")
+            f.write(f"{model.__class__.__name__}: {accuracy * 100:.2f} %    {model.get_params()}\n")
 
         f.write("\n")
 
         for (model, accuracy) in regression_accuracies:
-            f.write(f"{model}: {accuracy * 100:.2f} %\n")
+            f.write(f"{model.__class__.__name__}: {accuracy * 100:.2f} %    {model.get_params()}\n")
 
 
 if __name__ == "__main__":
