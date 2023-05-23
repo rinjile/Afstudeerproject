@@ -17,9 +17,9 @@ def plot(x, y, ci_lower, ci_upper, model):
     for i in range(len(y)):
         label = "Training score" if i == 0 else "Test score"
         plt.plot(x, y[i], label=label, marker="o")
-        plt.fill_between(x, ci_lower[i], ci_upper[i], alpha=0.2)
+        plt.fill_between(x, ci_lower[i], ci_upper[i], label="95% confidence interval", alpha=0.2)
 
-    plt.title(f"Learning curve for {model}")
+    plt.title(f"Learning curve for {model} with 5-fold cross-validation")
     plt.xlabel("Number of training samples")
     plt.ylabel("Accuracy")
     plt.legend(loc="best")
