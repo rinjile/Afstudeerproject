@@ -11,6 +11,7 @@ TODO
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from tqdm import tqdm
 
 
 def plot(x, y, ci_lower, ci_upper, model):
@@ -29,8 +30,9 @@ def plot(x, y, ci_lower, ci_upper, model):
 
 def main():
     files = os.listdir("results")
+    files = [file for file in files if file[:14] == "learning_curve"]
 
-    for file in files:
+    for file in tqdm(files, desc="Plotting learning curves"):
         model = file.split("_")[-1].split(".")[0]
         data = pd.read_csv(f"results/{file}")
 
