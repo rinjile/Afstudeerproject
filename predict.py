@@ -13,6 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 import sys
 import os
+import datetime
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, LinearRegression, SGDRegressor
 from sklearn.neural_network import MLPClassifier
@@ -102,7 +103,7 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        (LogisticRegression(max_iter=6000, random_state=random_seed),  # Max_iter to prevent ConvergenceWarning
+        (LogisticRegression(max_iter=7000, random_state=random_seed),  # Max_iter to prevent ConvergenceWarning
          {
              "estimator__C": [0.1, 0.5, 1, 3],
              "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
@@ -275,6 +276,8 @@ def main():
 
     filename = sys.argv[1]
     check_file_exists(filename)
+
+    print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}")
 
     hyperparams_tuning = True
     if len(sys.argv) > 2 and sys.argv[2] == "--notuning":
