@@ -17,14 +17,16 @@ from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, LinearRegression, SGDRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC, SVR
+from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingRegressor
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
 from sklearn.model_selection import GridSearchCV, LearningCurveDisplay, learning_curve, ShuffleSplit
+
+random_seed = 10
 
 
 def check_file_exists(filename):
@@ -35,7 +37,7 @@ def check_file_exists(filename):
     :param filename: Name of the file (str).
     :return: None.
     """
-    if os.path.isfile(f"data/{filename}.txt"):
+    if os.path.isfile(f"results/{filename}.txt"):
         print("File already exists!")
         while True:
             answer = input("Do you want to overwrite the file? (y/n): ")
@@ -99,22 +101,21 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
-    # TODO: params
     models = [
-        (LogisticRegression(max_iter=10**4),  # To prevent ConvergenceWarning
+        (LogisticRegression(max_iter=6000, random_state=random_seed),  # Max_iter to prevent ConvergenceWarning
          {
-             "estimator__C": [0.1, 1, 10, 100],
+             "estimator__C": [0.1, 0.5, 1, 3],
              "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
          }),
         (GaussianNB(),
          {}),  # No hyperparameters to tune
         (BernoulliNB(),  # Boolean features (TODO: deze doen?)
          {
-                "estimator__alpha": [0.1, 0.5, 1, 2, 5],
+                "estimator__alpha": [0.01, 0.1, 0.5, 1, 2],
          }),
         (MultinomialNB(),
          {
-             "estimator__alpha": [0.1, 0.5, 1, 2, 5],
+             "estimator__alpha": [0.01, 0.1, 0.5, 1, 2],
              "estimator__fit_prior": [True, False],
              "estimator__class_prior": [None, [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.5, 0.5]]
          }),
@@ -126,22 +127,41 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
              "estimator__p": [1, 2, 3]
          }),
-        (SGDClassifier(loss="log_loss"),  # TODO: checken
+        (SGDClassifier(loss="log_loss", random_state=random_seed),
          {
-             "estimator__penalty": ["l2", "l1", "elasticnet"],
-             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1, 2, 5],
+             # "estimator__penalty": ["l2", "l1", "elasticnet"],
+             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
              "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
-        (SVC(probability=True),
-         {}),
-        (MLPClassifier(max_iter=10**4),  # To prevent ConvergenceWarning
-         {}),
-        (DecisionTreeClassifier(),
-         {}),
-        (RandomForestClassifier(),
-         {})
+        (SVC(probability=True, random_state=random_seed),
+         {
+             # "estimator__C": [0.1, 1, 10, 100],
+             "estimator__kernel": ["poly", "rbf", "sigmoid"],  # 'linear' option is slow and 'precomputed' only works with a square kernel matrix
+             # "estimator__degree": [1, 2, 3, 4, 5],
+             "estimator__gamma": ["scale", "auto"]
+         }),
+        (MLPClassifier(random_state=random_seed),
+         {
+             "estimator__hidden_layer_sizes": [(50,), (100,), (200,), (500,)],
+             "estimator__activation": ["identity", "logistic", "tanh", "relu"],
+             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
+         }),
+        (DecisionTreeClassifier(random_state=random_seed),
+         {
+             "estimator__criterion": ["gini", "entropy", "log_loss"],
+             "estimator__splitter": ["best", "random"],
+             "estimator__max_features": [None, "sqrt", "log2"],
+         }),
+        (RandomForestClassifier(random_state=random_seed),
+         {
+             "estimator__n_estimators": [10, 50, 100],
+             "estimator__criterion": ["gini", "entropy", "log_loss"],
+             "estimator__max_features": [None, "sqrt", "log2"]
+         })
 
+        # (LinearSVC(),  # TODO: doen?
+        #  {})
         # GaussianProcessClassifier(),
         # RidgeClassifier(),
         # ComplementNB(),
@@ -153,7 +173,8 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
         "X": data,
         "y": targets,
         "train_sizes": np.linspace(0.1, 1.0, 10),
-        "cv": ShuffleSplit(n_splits=5, test_size=0.2, random_state=10),
+        "cv": 5,
+        "random_state": random_seed
         # "n_jobs": 4,
     }
 
@@ -198,6 +219,7 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     y_test.reset_index(drop=True, inplace=True)
 
     # TODO: params
+    # TODO: random_state
     models = [
         (LinearRegression(),
          {}),
@@ -207,6 +229,9 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
          {}),
         (GradientBoostingRegressor(),
          {})
+
+        # (DecisionTreeRegressor(),
+        #  {})
     ]
 
     accuracies = []
@@ -259,7 +284,7 @@ def main():
     classification_accuracies = classification(data, hyperparams_tuning)
     regression_accuracies = regression(data, hyperparams_tuning)
 
-    with open(f"data/{filename}.txt", "w") as f:
+    with open(f"results/{filename}.txt", "w") as f:
         for (model, accuracy) in classification_accuracies:
             f.write(f"{model.__class__.__name__}: {accuracy * 100:.2f} %    {model.get_params()}\n")
 
