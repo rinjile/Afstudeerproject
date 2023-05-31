@@ -1,4 +1,0 @@
-LogisticRegression: 47.89 %    {'C': 1, 'class_weight': None, 'dual': False, 'fit_intercept': True, 'intercept_scaling': 1, 'l1_ratio': None, 'max_iter': 10000, 'multi_class': 'auto', 'n_jobs': None, 'penalty': 'l2', 'random_state': 10, 'solver': 'liblinear', 'tol': 0.0001, 'verbose': 0, 'warm_start': False}
-GaussianNB: 47.45 %    {'priors': None, 'var_smoothing': 1e-09}
-MultinomialNB: 47.10 %    {'alpha': 0.01, 'class_prior': None, 'fit_prior': True, 'force_alpha': 'warn'}
-BernoulliNB: 42.53 %    {'alpha': 0.01, 'binarize': 0.0, 'class_prior': None, 'fit_prior': True, 'force_alpha': 'warn'}
