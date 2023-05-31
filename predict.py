@@ -93,7 +93,7 @@ def save_learning_curve(model, learning_curve_params, ci=95):
                     f"{validation_ci_upper[i]}\n")
 
 
-def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8):
+def classification_prediction(data, targets, hyperparams_tuning, verbose, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -184,7 +184,7 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
 
     for (model, params) in tqdm(models, desc="Predicting the result (classification)"):
         if hyperparams_tuning:
-            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy", verbose=3)
+            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy", verbose=verbose)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -202,16 +202,16 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
     return accuracies
 
 
-def classification(data, hyperparams_tuning):
+def classification(data, hyperparams_tuning, verbose):
     targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False, header=None)
     # data = data.head(50)
     # targets = targets.head(50)
 
-    accuracies = classification_prediction(data, targets, hyperparams_tuning)
+    accuracies = classification_prediction(data, targets, hyperparams_tuning, verbose)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
-def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
+def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -250,7 +250,7 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     for (model, params) in tqdm(models, desc="Predicting the score (regression)"):
         if hyperparams_tuning:
             # TODO: scoring
-            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5, scoring="accuracy", verbose=3)
+            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5, scoring="accuracy", verbose=verbose)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -270,12 +270,12 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     return accuracies
 
 
-def regression(data, hyperparams_tuning):
+def regression(data, hyperparams_tuning, verbose):
     targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False, header=None)
     # data = data.head(500)
     # targets = targets.head(500)
 
-    accuracies = regression_prediction(data, targets, hyperparams_tuning)
+    accuracies = regression_prediction(data, targets, hyperparams_tuning, verbose)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
@@ -290,13 +290,19 @@ def main():
     print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
 
     hyperparams_tuning = True
-    if len(sys.argv) > 2 and sys.argv[2] == "--notuning":
-        hyperparams_tuning = False
-        print("Hyperparameters tuning is disabled.")
+    verbose = 0
+
+    if len(sys.argv) > 2:
+        if "--notuning" in sys.argv:
+            hyperparams_tuning = False
+            print("Hyperparameters tuning is disabled.")
+        if "--verbose" in sys.argv:
+            verbose = 3
+            print("Verbose mode is enabled.")
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
-    classification_accuracies = classification(data, hyperparams_tuning)
-    regression_accuracies = regression(data, hyperparams_tuning)
+    classification_accuracies = classification(data, hyperparams_tuning, verbose)
+    regression_accuracies = regression(data, hyperparams_tuning, verbose)
 
     with open(f"results/{filename}.txt", "w") as f:
         for (model, accuracy) in classification_accuracies:
