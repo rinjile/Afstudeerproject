@@ -105,6 +105,7 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
     targets_result = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
     targets_score = pd.DataFrame(columns=["home", "away"], dtype=int)
 
+    # Loop over all fixtures
     for (i, row) in tqdm(fixtures.iterrows(), desc="Creating data and targets", total=fixtures.shape[0]):
         home, away = get_last_fixtures(fixtures.head(i), row, n)
         h2h = get_last_h2h_fixtures(fixtures.head(i), row, n)
@@ -114,6 +115,7 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
 
         stats = pd.DataFrame()
 
+        # Loop over last n fixtures
         for j in range(n):
             home_score = get_fixture_score(fixtures, home.iloc[j], f"home {j + 1}")
             home_stats = get_fixture_stats(fixture_stats, home.iloc[j], row["teams.home.id"], f"home {j + 1}")
@@ -122,13 +124,15 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
             away_stats = get_fixture_stats(fixture_stats, away.iloc[j], row["teams.away.id"], f"away {j + 1}")
 
             h2h_score = get_fixture_score(fixtures, h2h.iloc[j], f"h2h {j + 1}")
-            h2h_stats = get_fixture_stats(fixture_stats, h2h.iloc[j], row["teams.home.id"], f"h2h {j + 1}")
+            h2h_home_stats = get_fixture_stats(fixture_stats, h2h.iloc[j], row["teams.home.id"], f"h2h - home {j + 1}")
+            h2h_away_stats = get_fixture_stats(fixture_stats, h2h.iloc[j], row["teams.away.id"], f"h2h - away {j + 1}")
 
-            if home_stats is None or away_stats is None or h2h_stats is None:
+            if home_stats is None or away_stats is None or h2h_home_stats is None or h2h_away_stats is None:
                 stats = pd.DataFrame()
                 break
 
-            stats = pd.concat([stats, home_score, home_stats, away_score, away_stats, h2h_score, h2h_stats], axis=1)
+            stats = pd.concat([stats, home_score, home_stats, away_score, away_stats, h2h_score, h2h_home_stats,
+                               h2h_away_stats], axis=1)
 
         if stats.shape[0] == 0:
             continue
