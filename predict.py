@@ -236,11 +236,11 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
     ]
 
     learning_curve_params = {
-        "X": data,
-        "y": targets,
+        "X": X_train,
+        "y": y_train,
         "train_sizes": np.linspace(0.1, 1.0, 10),
         "cv": 5,
-        # "scoring":  # TODO
+        "scoring": "neg_mean_absolute_error",  # TODO: andere?
         "random_state": random_seed
         # "n_jobs": 4,
     }
@@ -249,8 +249,8 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
 
     for (model, params) in tqdm(models, desc="Predicting the score (regression)"):
         if hyperparams_tuning:
-            # TODO: scoring
-            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5, scoring="accuracy", verbose=verbose)
+            # TODO: andere scoring?
+            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5, scoring="neg_mean_absolute_error", verbose=verbose)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -262,6 +262,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
         # Round to the nearest integer
         y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5 else np.ceil(x)).astype(int)
 
+        # TODO: wrm kan niet
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
 
