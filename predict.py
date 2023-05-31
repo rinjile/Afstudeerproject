@@ -38,7 +38,7 @@ def check_file_exists(filename):
     :param filename: Name of the file (str).
     :return: None.
     """
-    if os.path.isfile(f"results/{filename}.txt"):
+    if os.path.isfile(f"results/{filename}.csv"):
         print("File already exists!")
         while True:
             answer = input("Do you want to overwrite the file? (y/n): ")
@@ -91,6 +91,19 @@ def save_learning_curve(model, learning_curve_params, ci=95):
                     f"{validation_scores[i].mean()},"
                     f"{validation_ci_lower[i]},"
                     f"{validation_ci_upper[i]}\n")
+
+
+def save_accuracies(classification_accuracies, regression_accuracies, filename):
+    with open(f"results/{filename}.csv", "w") as f:
+        f.write("type,model,accuracy,hyperparameters\n")
+
+        for (model, accuracy) in classification_accuracies:
+            f.write(f"classification,{model.__class__.__name__},{accuracy * 100:.2f},\"{model.get_params()}\"\n")
+
+        f.write("\n")
+
+        for (model, accuracy) in regression_accuracies:
+            f.write(f"regression,{model.__class__.__name__},{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
 
 def classification_prediction(data, targets, hyperparams_tuning, verbose, train_size=0.8):
@@ -304,15 +317,7 @@ def main():
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     classification_accuracies = classification(data, hyperparams_tuning, verbose)
     regression_accuracies = regression(data, hyperparams_tuning, verbose)
-
-    with open(f"results/{filename}.txt", "w") as f:
-        for (model, accuracy) in classification_accuracies:
-            f.write(f"{model.__class__.__name__}: {accuracy * 100:.2f} %    {model.get_params()}\n")
-
-        f.write("\n")
-
-        for (model, accuracy) in regression_accuracies:
-            f.write(f"{model.__class__.__name__}: {accuracy * 100:.2f} %    {model.get_params()}\n")
+    save_accuracies(classification_accuracies, regression_accuracies, filename)
 
 
 if __name__ == "__main__":
