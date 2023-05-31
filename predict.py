@@ -74,23 +74,23 @@ def prob2target(prob):
 
 def save_learning_curve(model, learning_curve_params, ci=95):
     # TODO: verbose?
-    train_sizes, train_scores, test_scores = learning_curve(model, **learning_curve_params)
+    train_sizes, train_scores, validation_scores = learning_curve(model, **learning_curve_params)
     train_ci_lower = np.percentile(train_scores, (100 - ci) / 2, axis=1)
     train_ci_upper = np.percentile(train_scores, (100 + ci) / 2, axis=1)
-    test_ci_lower = np.percentile(test_scores, (100 - ci) / 2, axis=1)
-    test_ci_upper = np.percentile(test_scores, (100 + ci) / 2, axis=1)
+    validation_ci_lower = np.percentile(validation_scores, (100 - ci) / 2, axis=1)
+    validation_ci_upper = np.percentile(validation_scores, (100 + ci) / 2, axis=1)
 
     with open(f"results/learning_curve_{model.estimator.__class__.__name__}.csv", "w") as f:
-        f.write(f"train_size,train_mean,train_ci_lower,train_ci_upper,test_mean,test_ci_lower,test_ci_upper\n")
+        f.write(f"train_size,train_mean,train_ci_lower,train_ci_upper,validation_mean,validation_ci_lower,validation_ci_upper\n")
 
         for i in range(train_sizes.shape[0]):
             f.write(f"{train_sizes[i]},"
                     f"{train_scores[i].mean()},"
                     f"{train_ci_lower[i]},"
                     f"{train_ci_upper[i]},"
-                    f"{test_scores[i].mean()},"
-                    f"{test_ci_lower[i]},"
-                    f"{test_ci_upper[i]}\n")
+                    f"{validation_scores[i].mean()},"
+                    f"{validation_ci_lower[i]},"
+                    f"{validation_ci_upper[i]}\n")
 
 
 def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8):
@@ -103,7 +103,7 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        (LogisticRegression(max_iter=7000, random_state=random_seed),  # Max_iter to prevent ConvergenceWarning
+        (LogisticRegression(max_iter=10**4, random_state=random_seed),  # Max_iter to prevent ConvergenceWarning
          {
              "estimator__C": [0.1, 0.5, 1, 3],
              "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
@@ -171,10 +171,11 @@ def classification_prediction(data, targets, hyperparams_tuning, train_size=0.8)
     ]
 
     learning_curve_params = {
-        "X": data,
-        "y": targets,
+        "X": X_train,
+        "y": y_train,
         "train_sizes": np.linspace(0.1, 1.0, 10),
         "cv": 5,
+        "scoring": "accuracy",
         "random_state": random_seed
         # "n_jobs": 4,
     }
@@ -219,28 +220,37 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
-    # TODO: params
-    # TODO: random_state
+    # TODO: params (+ random_state)
     models = [
         (LinearRegression(),
          {}),
         (SVR(),
          {}),
-        (SGDRegressor(),
+        (SGDRegressor(random_state=random_seed),
          {}),
-        (GradientBoostingRegressor(),
+        (GradientBoostingRegressor(random_state=random_seed),
          {})
 
-        # (DecisionTreeRegressor(),
+        # (DecisionTreeRegressor(random_state=random_seed),
         #  {})
     ]
+
+    learning_curve_params = {
+        "X": data,
+        "y": targets,
+        "train_sizes": np.linspace(0.1, 1.0, 10),
+        "cv": 5,
+        # "scoring":  # TODO
+        "random_state": random_seed
+        # "n_jobs": 4,
+    }
 
     accuracies = []
 
     for (model, params) in tqdm(models, desc="Predicting the score (regression)"):
         if hyperparams_tuning:
-            # TODO: error
-            model = GridSearchCV(model, params, cv=5, scoring="accuracy", verbose=3)
+            # TODO: scoring
+            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5, scoring="accuracy", verbose=3)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -251,11 +261,11 @@ def regression_prediction(data, targets, hyperparams_tuning, train_size=0.8):
 
         # Round to the nearest integer
         y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5 else np.ceil(x)).astype(int)
-        # Set negative values to 0
-        y_pred = y_pred.applymap(lambda x: 0 if x < 0 else x)
 
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
+
+        save_learning_curve(model, learning_curve_params)
 
     return accuracies
 
@@ -277,11 +287,12 @@ def main():
     filename = sys.argv[1]
     check_file_exists(filename)
 
-    print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}")
+    print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
 
     hyperparams_tuning = True
     if len(sys.argv) > 2 and sys.argv[2] == "--notuning":
         hyperparams_tuning = False
+        print("Hyperparameters tuning is disabled.")
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     classification_accuracies = classification(data, hyperparams_tuning)
