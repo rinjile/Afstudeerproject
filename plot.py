@@ -16,17 +16,15 @@ from tqdm import tqdm
 
 
 def plot(x, y, ci_lower, ci_upper, model):
-    # TODO: naar NL vertalen
-
-    plt.plot(x, y[0], label="Training score", marker="o")
-    plt.fill_between(x, ci_lower[0], ci_upper[0], label="95% CI (training)", alpha=0.2)
-    plt.plot(x, y[1], label="Validation score", marker="o")
-    plt.fill_between(x, ci_lower[1], ci_upper[1], label="95% CI (validation)", alpha=0.2)
+    plt.plot(x, y[0], label="Train-score", marker="o")
+    plt.fill_between(x, ci_lower[0], ci_upper[0], label="95% CI (train)", alpha=0.2)
+    plt.plot(x, y[1], label="Validatie-score", marker="o")
+    plt.fill_between(x, ci_lower[1], ci_upper[1], label="95% CI (validatie)", alpha=0.2)
 
     # TODO: model naam aanpassen
-    plt.title(f"Learning curve for {model} with 5-fold cross-validation")
-    plt.xlabel("Number of training samples")
-    plt.ylabel("Accuracy")  # TODO: bij regression anders
+    plt.title(f"Leercurve van {model} met 5-voudige kruisvalidatie")
+    plt.xlabel("Trainset grootte")
+    plt.ylabel("Nauwkeurigheid")  # TODO: bij regression anders
     plt.legend(loc="best")
     plt.savefig(f"plots/learning_curve_{model}.png", dpi=1000)
     plt.clf()  # Clear the figure
