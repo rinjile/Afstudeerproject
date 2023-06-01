@@ -60,6 +60,13 @@ def plot_bars(data, model_type="all"):
     plt.bar_label(bars, label_type="center", fmt="%.2f")
     plt.title(title)
     plt.xlabel("Nauwkeurigheid (%)")
+
+    if model_type == "all":
+        labels = ["Classificator", "Regressor"]
+        colors = ["royalblue", "limegreen"]
+        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[i]) for i in range(len(labels))]
+        plt.legend(handles, labels, loc="best")
+
     plt.tight_layout()
     plt.savefig(f"plots/accuracies_{model_type}.png", dpi=1000)
     plt.clf()  # Clear the figure
