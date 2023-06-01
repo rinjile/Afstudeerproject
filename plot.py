@@ -74,20 +74,22 @@ def plot_bars(data, model_type="all"):
 
 
 def plot_learning_curve(data, model):
-    x = data["train_size"]
+    # Multiply the data by 100 to get the accuracy in percentages
+    if model in classifiers:
+        data = data.apply(lambda x: x * 100 if x.name != "train_size" else x)
 
-    plt.plot(x, data["train_mean"], label="Train-score", marker="o", color="royalblue")
-    plt.fill_between(x, data["train_ci_lower"], data["train_ci_upper"], label="95% CI (train)",
+    plt.plot(data["train_size"], data["train_mean"], label="Train-score", marker="o", color="royalblue")
+    plt.fill_between(data["train_size"], data["train_ci_lower"], data["train_ci_upper"], label="95% CI (train)",
                      alpha=0.2, color="royalblue")
-    plt.plot(x, data["validation_mean"], label="Validatie-score", marker="o", color="limegreen")
-    plt.fill_between(x, data["validation_ci_lower"], data["validation_ci_upper"], label="95% CI (validatie)",
+    plt.plot(data["train_size"], data["validation_mean"], label="Validatie-score", marker="o", color="limegreen")
+    plt.fill_between(data["train_size"], data["validation_ci_lower"], data["validation_ci_upper"], label="95% CI (validatie)",
                      alpha=0.2, color="limegreen")
 
     plt.title(f"{model_names[model]}: leercurve met 5-voudige kruisvalidatie")
     plt.xlabel("Trainset grootte")
 
     if model in classifiers:
-        plt.ylabel("Nauwkeurigheid")
+        plt.ylabel("Nauwkeurigheid (%)")
     else:
         plt.ylabel("Gemiddelde absolute fout (negatie)")
 
