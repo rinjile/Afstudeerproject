@@ -21,12 +21,13 @@ model_names = {
     "BernoulliNB": "Bernoulli Naive Bayes",
     "MultinomialNB": "Multi-nomiaal Naive Bayes",
     "KNeighborsClassifier": "K-Nearest Neighbors",
-    "SGDClassifier": "...",  # TODO
+    "SGDClassifier": "SGDClassifier",  # TODO
     "SVC": "Support Vector Machine",
     "MLPClassifier": "Neuraal Netwerk",
     "DecisionTreeClassifier": "Decision Tree",
     "RandomForestClassifier": "Random Forest",
 }
+
 
 def plot(x, y, ci_lower, ci_upper, model):
     plt.plot(x, y[0], label="Train-score", marker="o")
