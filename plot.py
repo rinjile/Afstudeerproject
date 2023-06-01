@@ -39,7 +39,12 @@ model_names = {
     "SVC": "Support Vector Machine",
     "MLPClassifier": "Neuraal Netwerk",
     "DecisionTreeClassifier": "Decision Tree",
-    "RandomForestClassifier": "Random Forest"
+    "RandomForestClassifier": "Random Forest",
+
+    "LinearRegression": "Lineaire Regressie",
+    "SVR": "Support Vector Machine",
+    "SGDRegressor": "SGDRegressor",  # TODO
+    "GradientBoostingRegressor": "GradientBoostingRegressor"  # TODO
 }
 
 
