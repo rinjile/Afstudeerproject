@@ -61,7 +61,8 @@ def plot_bars(data, model_type="all"):
     plt.title(title)
     plt.xlabel("Nauwkeurigheid (%)")
 
-    if model_type == "all":
+    # Add legend if both classifiers and regressors are present in the data
+    if model_type == "all" and len(data["type"].unique()) == 2:
         labels = ["Classificator", "Regressor"]
         colors = ["royalblue", "limegreen"]
         handles = [plt.Rectangle((0, 0), 1, 1, color=colors[i]) for i in range(len(labels))]
