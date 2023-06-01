@@ -14,6 +14,19 @@ import sys
 import os
 from tqdm import tqdm
 
+# TODO: regression
+model_names = {
+    "LogisticRegression": "Logistische Regressie",
+    "GaussianNB": "Gaussian Naive Bayes",
+    "BernoulliNB": "Bernoulli Naive Bayes",
+    "MultinomialNB": "Multi-nomiaal Naive Bayes",
+    "KNeighborsClassifier": "K-Nearest Neighbors",
+    "SGDClassifier": "...",  # TODO
+    "SVC": "Support Vector Machine",
+    "MLPClassifier": "Neuraal Netwerk",
+    "DecisionTreeClassifier": "Decision Tree",
+    "RandomForestClassifier": "Random Forest",
+}
 
 def plot(x, y, ci_lower, ci_upper, model):
     plt.plot(x, y[0], label="Train-score", marker="o")
@@ -22,7 +35,7 @@ def plot(x, y, ci_lower, ci_upper, model):
     plt.fill_between(x, ci_lower[1], ci_upper[1], label="95% CI (validatie)", alpha=0.2)
 
     # TODO: model naam aanpassen
-    plt.title(f"Leercurve van {model} met 5-voudige kruisvalidatie")
+    plt.title(f"{model_names[model]}: leercurve met 5-voudige kruisvalidatie")
     plt.xlabel("Trainset grootte")
     plt.ylabel("Nauwkeurigheid")  # TODO: bij regression anders
     plt.legend(loc="best")
