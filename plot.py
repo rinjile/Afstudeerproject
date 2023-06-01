@@ -28,13 +28,14 @@ classifiers = [
 ]
 
 # TODO: regression
+# The model names are used for the plots (in Dutch)
 model_names = {
     "LogisticRegression": "Logistische Regressie",
     "GaussianNB": "Gaussian Naive Bayes",
     "BernoulliNB": "Bernoulli Naive Bayes",
     "MultinomialNB": "Multi-nomiaal Naive Bayes",
     "KNeighborsClassifier": "K-nearest Neighbors",
-    "SGDClassifier": "SGDClassifier",  # TODO
+    "SGDClassifier": "SGDClassifier",  # TODO: verwijderen?
     "SVC": "Support Vector Machine",
     "MLPClassifier": "Neuraal Netwerk",
     "DecisionTreeClassifier": "Decision Tree",
@@ -42,24 +43,37 @@ model_names = {
 }
 
 
-def plot_bars(data):
-    data = data.sort_values(by="accuracy", ascending=True)
-    models = data["model"]
-    accuracies = data["accuracy"]
+def plot_bars(data, model_type="all"):
+    if model_type == "classification":
+        data = data[data["type"] == model_type]
+        title = "Nauwkeurigheid van verschillende classificators"
+    elif model_type == "regression":
+        data = data[data["type"] == model_type]
+        title = "Nauwkeurigheid van verschillende regressors"
+    else:
+        title = "Nauwkeurigheid van verschillende modellen"
 
-    bars = plt.barh([model_names[model] for model in models], accuracies, color="royalblue")
+    data = data.sort_values(by="accuracy", ascending=True)
+    colors = ["royalblue" if row["type"] == "classification" else "limegreen" for (_, row) in data.iterrows()]
+
+    bars = plt.barh([model_names[model] for model in data["model"]], data["accuracy"], color=colors, edgecolor="black")
     plt.bar_label(bars, label_type="center", fmt="%.2f")
-    plt.title("Nauwkeurigheid van verschillende modellen")
+    plt.title(title)
     plt.xlabel("Nauwkeurigheid (%)")
     plt.tight_layout()
-    plt.savefig("plots/accuracies.png", dpi=1000)
+    plt.savefig(f"plots/accuracies_{model_type}.png", dpi=1000)
+    plt.clf()  # Clear the figure
 
 
-def plot_learning_curve(x, y, ci_lower, ci_upper, model):
-    plt.plot(x, y[0], label="Train-score", marker="o", color="royalblue")
-    plt.fill_between(x, ci_lower[0], ci_upper[0], label="95% CI (train)", alpha=0.2, color="royalblue")
-    plt.plot(x, y[1], label="Validatie-score", marker="o", color="limegreen")
-    plt.fill_between(x, ci_lower[1], ci_upper[1], label="95% CI (validatie)", alpha=0.2, color="limegreen")
+def plot_learning_curve(data, model):
+    x = data["train_size"]
+
+    plt.plot(x, data["train_mean"], label="Train-score", marker="o", color="royalblue")
+    plt.fill_between(x, data["train_ci_lower"], data["train_ci_upper"], label="95% CI (train)",
+                     alpha=0.2, color="royalblue")
+    plt.plot(x, data["validation_mean"], label="Validatie-score", marker="o", color="limegreen")
+    plt.fill_between(x, data["validation_ci_lower"], data["validation_ci_upper"], label="95% CI (validatie)",
+                     alpha=0.2, color="limegreen")
 
     plt.title(f"{model_names[model]}: leercurve met 5-voudige kruisvalidatie")
     plt.xlabel("Trainset grootte")
@@ -87,6 +101,8 @@ def main():
         else:
             data = pd.read_csv(sys.argv[2])
             plot_bars(data)
+            plot_bars(data, model_type="classification")
+            plot_bars(data, model_type="regression")
     elif sys.argv[1] == "--lc":
         if len(sys.argv) > 2:
             file = sys.argv[2]
@@ -98,10 +114,7 @@ def main():
         for file in tqdm(files, desc="Plotting learning curves"):
             model = file.split("_")[-1].split(".")[0]
             data = pd.read_csv(f"results/{file}")
-
-            plot_learning_curve(data["train_size"], [data["train_mean"], data["validation_mean"]],
-                                [data["train_ci_lower"], data["validation_ci_lower"]],
-                                [data["train_ci_upper"], data["validation_ci_upper"]], model)
+            plot_learning_curve(data, model)
 
 
 if __name__ == "__main__":
