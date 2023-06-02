@@ -24,7 +24,7 @@ from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier, DecisionTr
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingRegressor
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
-from sklearn.multiclass import OneVsRestClassifier  # TODO: OneVsOneClassifier, OutputCodeClassifier
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import GridSearchCV, LearningCurveDisplay, learning_curve, ShuffleSplit
 
 random_seed = 10
@@ -63,6 +63,7 @@ def prob2target(prob):
         max_prob = max(row)
 
         if row.value_counts()[max_prob] > 1:
+            # TODO: niet random doen?
             max_indices = np.where(row == max_prob)[0]
             prob.iloc[i] = [0, 0, 0]
             prob.iloc[i][np.random.choice(max_indices)] = 1
@@ -73,7 +74,6 @@ def prob2target(prob):
 
 
 def save_learning_curve(model, learning_curve_params, ci=95):
-    # TODO: verbose?
     train_sizes, train_scores, validation_scores = learning_curve(model, **learning_curve_params)
     train_ci_lower = np.percentile(train_scores, (100 - ci) / 2, axis=1)
     train_ci_upper = np.percentile(train_scores, (100 + ci) / 2, axis=1)
@@ -146,15 +146,16 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
              "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
-        (SVC(probability=True, random_state=random_seed),  # TODO: max_iter instellen?
+        (SVC(probability=True, max_iter=1000, random_state=random_seed),
          {
              # "estimator__C": [0.1, 1, 10, 100],
-             "estimator__kernel": ["poly", "rbf", "sigmoid"],  # 'linear' option is slow and 'precomputed' only works with a square kernel matrix
+             "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
              # "estimator__degree": [1, 2, 3, 4, 5],
              "estimator__gamma": ["scale", "auto"]
          }),
         (MLPClassifier(random_state=random_seed),
          {
+             # TODO: meer hidden layers (2/3)
              "estimator__hidden_layer_sizes": [(50,), (100,), (200,), (500,)],
              "estimator__activation": ["identity", "logistic", "tanh", "relu"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
@@ -273,7 +274,6 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
         # Round to the nearest integer
         y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5 else np.ceil(x)).astype(int)
 
-        # TODO: wrm kan niet
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
 
@@ -293,7 +293,7 @@ def regression(data, hyperparams_tuning, verbose):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 predict.py <file name> [--notuning]")
+        print("Usage: python3 predict.py <file name> [--notuning] [--verbose]")
         sys.exit(1)
 
     filename = sys.argv[1]
