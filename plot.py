@@ -28,20 +28,20 @@ classifiers = [
 ]
 
 # TODO: regression
-# The model names are used for the plots (in Dutch)
+# The model names are used for the plots
 model_names = {
-    "LogisticRegression": "Logistische Regressie",
+    "LogisticRegression": "Logistic Regression",
     "GaussianNB": "Gaussian Naive Bayes",
     "BernoulliNB": "Bernoulli Naive Bayes",
-    "MultinomialNB": "Multi-nomiaal Naive Bayes",
-    "KNeighborsClassifier": "K-nearest Neighbors",
-    "SGDClassifier": "SGDClassifier",  # TODO: verwijderen?
+    "MultinomialNB": "Multinomial Naive Bayes",
+    "KNeighborsClassifier": "K-Nearest Neighbors",
+    "SGDClassifier": "Stochastic Logistic Regression",  # TODO: verwijderen?
     "SVC": "Support Vector Machine",
-    "MLPClassifier": "Neuraal Netwerk",
+    "MLPClassifier": "Neural Network",
     "DecisionTreeClassifier": "Decision Tree",
     "RandomForestClassifier": "Random Forest",
 
-    "LinearRegression": "Lineaire Regressie",
+    "LinearRegression": "Linear Regression",
     "SVR": "Support Vector Machine",
     "SGDRegressor": "SGDRegressor",  # TODO
     "GradientBoostingRegressor": "GradientBoostingRegressor"  # TODO
