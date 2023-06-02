@@ -100,8 +100,6 @@ def save_accuracies(classification_accuracies, regression_accuracies, filename):
         for (model, accuracy) in classification_accuracies:
             f.write(f"classification,{model.__class__.__name__},{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
-        f.write("\n")
-
         for (model, accuracy) in regression_accuracies:
             f.write(f"regression,{model.__class__.__name__},{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
@@ -116,7 +114,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        (LogisticRegression(max_iter=10**4, random_state=random_seed),  # Max_iter to prevent ConvergenceWarning
+        (LogisticRegression(max_iter=10**4, random_state=random_seed),  # Max_iter to prevent most convergence warnings
          {
              "estimator__C": [0.1, 0.5, 1, 3],
              "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
@@ -141,14 +139,14 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
              "estimator__p": [1, 2, 3]
          }),
-        (SGDClassifier(loss="log_loss", random_state=random_seed),
+        (SGDClassifier(loss="log_loss", random_state=random_seed),  # TODO: niet doen?
          {
              # "estimator__penalty": ["l2", "l1", "elasticnet"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
              "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
-        (SVC(probability=True, random_state=random_seed),
+        (SVC(probability=True, random_state=random_seed),  # TODO: max_iter instellen?
          {
              # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["poly", "rbf", "sigmoid"],  # 'linear' option is slow and 'precomputed' only works with a square kernel matrix
@@ -317,6 +315,8 @@ def main():
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
     classification_accuracies = classification(data, hyperparams_tuning, verbose)
     regression_accuracies = regression(data, hyperparams_tuning, verbose)
+    # classification_accuracies = []
+    # regression_accuracies = []
     save_accuracies(classification_accuracies, regression_accuracies, filename)
 
 
