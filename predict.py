@@ -15,17 +15,16 @@ import sys
 import os
 import datetime
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, LinearRegression, SGDRegressor
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier, DecisionTreeRegressor
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingRegressor
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, ComplementNB
-from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
+from sklearn.linear_model import LogisticRegression, SGDClassifier, LinearRegression, SGDRegressor
+from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import GridSearchCV, LearningCurveDisplay, learning_curve, ShuffleSplit
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.model_selection import GridSearchCV, learning_curve
 
 random_seed = 10
 
@@ -133,7 +132,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
          }),
         (KNeighborsClassifier(),
          {
-             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
+             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],  # TODO: experiment met 1 tm 10
              "estimator__weights": ["uniform", "distance"],
              # "estimator__algorithm": ["ball_tree", "kd_tree", "brute"],
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
@@ -146,7 +145,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
              "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
-        (SVC(probability=True, max_iter=1000, random_state=random_seed),
+        (SVC(probability=True, max_iter=1000, random_state=random_seed),  # TODO: experiment zonder max_iter
          {
              # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
@@ -229,19 +228,50 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
-    # TODO: params (+ random_state)
     models = [
         (LinearRegression(),
-         {}),
-        (SVR(),
-         {}),
-        (SGDRegressor(random_state=random_seed),
-         {}),
-        (GradientBoostingRegressor(random_state=random_seed),
-         {})
+         {}),  # No hyperparameters to tune
+        (KNeighborsRegressor(),
+         {
+             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],  # TODO: experiment met 1 tm 10
+             "estimator__weights": ["uniform", "distance"],
+             "estimator__p": [1, 2, 3]
+         }),
+        (SGDRegressor(random_state=random_seed),  # TODO: niet doen?
+         {
+             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
+             "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
+             "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
+         }),
+        (SVR(),  # TODO: max_iter?
+         {
+             # "estimator__C": [0.1, 1, 10, 100],
+             "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
+             "estimator__gamma": ["scale", "auto"]
+         }),
+        (MLPRegressor(random_state=random_seed),
+         {
+             "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2), (100, 2), (500, 2), (50, 3), (100, 3),
+                                               (500, 3)],
+             "estimator__activation": ["identity", "logistic", "tanh", "relu"],
+             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
+         }),
+        (DecisionTreeRegressor(random_state=random_seed),
+         {
+             "estimator__criterion": ["squared_error", "friedman_mse", "absolute_error", "poisson"],
+             "estimator__splitter": ["best", "random"],
+             "estimator__max_features": [None, "sqrt", "log2"],
+         }),
+        (RandomForestRegressor(random_state=random_seed),
+         {
+             "estimator__n_estimators": [10, 50, 100],
+             "estimator__criterion": ["squared_error", "friedman_mse", "absolute_error", "poisson"],
+             "estimator__max_features": [None, "sqrt", "log2", 1]  # TODO: 1?
+         }),
 
-        # (DecisionTreeRegressor(random_state=random_seed),
+        # (GradientBoostingRegressor(random_state=random_seed),
         #  {})
+        # BayesianRidge
     ]
 
     learning_curve_params = {
