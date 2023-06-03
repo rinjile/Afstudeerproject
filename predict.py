@@ -155,8 +155,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
          }),
         (MLPClassifier(random_state=random_seed),
          {
-             # TODO: meer hidden layers (2/3)
-             "estimator__hidden_layer_sizes": [(50,), (100,), (200,), (500,)],
+             "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2), (100, 2), (500, 2), (50, 3), (100, 3), (500, 3)],
              "estimator__activation": ["identity", "logistic", "tanh", "relu"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
          }),
@@ -173,8 +172,6 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
              "estimator__max_features": [None, "sqrt", "log2"]
          })
 
-        # (LinearSVC(),  # TODO: doen?
-        #  {})
         # GaussianProcessClassifier(),
         # RidgeClassifier(),
         # ComplementNB(),
