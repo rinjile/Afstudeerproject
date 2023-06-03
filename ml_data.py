@@ -100,7 +100,6 @@ def add_target(targets, home_winner, away_winner):
 
 
 def create_data_and_targets(fixtures, fixture_stats, n=5):
-    # TODO: optimize?
     data = pd.DataFrame()
     targets_result = pd.DataFrame(columns=["home", "draw", "away"], dtype=int)
     targets_score = pd.DataFrame(columns=["home", "away"], dtype=int)
@@ -148,12 +147,10 @@ def main():
     fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
     # Only use the top 5 leagues
     fixtures = fixtures[fixtures["league.name"].isin(["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"])]
-    # TODO: ["FT", "AET", "PEN"]?
     fixtures = fixtures[fixtures["fixture.status.short"].isin(["FT"])]
 
     fixtures["fixture.date"] = pd.to_datetime(fixtures["fixture.date"])
     fixtures = fixtures.sort_values(by="fixture.date", ascending=True)
-    # fixtures = fixtures.head(3200)
 
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
