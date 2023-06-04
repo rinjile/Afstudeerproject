@@ -50,7 +50,7 @@ model_names = {
 }
 
 
-def plot_bars(data, model_type="all"):
+def plot_bars(data, filename, model_type="all"):
     if model_type == "classification":
         data = data[data["type"] == model_type]
         title = "Nauwkeurigheid van verschillende classificators"
@@ -80,7 +80,7 @@ def plot_bars(data, model_type="all"):
         plt.legend(handles, labels, loc="best")
 
     plt.tight_layout()
-    plt.savefig(f"plots/accuracies_{model_type}.png", dpi=1000)
+    plt.savefig(f"plots/{filename}_{model_type}.png", dpi=1000)
     plt.clf()  # Clear the figure
 
 
@@ -125,9 +125,12 @@ def main():
             return
         else:
             data = pd.read_csv(sys.argv[2])
-            plot_bars(data)
-            plot_bars(data, model_type="classification")
-            plot_bars(data, model_type="regression")
+            # File name without the dictionary and extension
+            filename = sys.argv[2].split("/")[1].split(".")[0]
+
+            plot_bars(data, filename)
+            plot_bars(data, filename, model_type="classification")
+            plot_bars(data, filename, model_type="regression")
     elif sys.argv[1] == "--lc":
         if len(sys.argv) > 2:
             file = sys.argv[2]
