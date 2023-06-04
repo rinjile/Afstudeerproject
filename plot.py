@@ -27,7 +27,6 @@ classifiers = [
     "RandomForestClassifier"
 ]
 
-# TODO: regression
 # The model names are used for the plots
 model_names = {
     "LogisticRegression": "Logistic Regression",
@@ -42,9 +41,12 @@ model_names = {
     "RandomForestClassifier": "Random Forest",
 
     "LinearRegression": "Linear Regression",
+    "KNeighborsRegressor": "K-Nearest Neighbors",
+    "SGDRegressor": "SGDRegressor",  # TODO: naam/verwijderen?
     "SVR": "Support Vector Machine",
-    "SGDRegressor": "SGDRegressor",  # TODO
-    "GradientBoostingRegressor": "GradientBoostingRegressor"  # TODO
+    "MLPRegressor": "Neural Network",
+    "DecisionTreeRegressor": "Decision Tree",
+    "RandomForestRegressor": "Random Forest"
 }
 
 
