@@ -40,13 +40,13 @@ model_names = {
     "DecisionTreeClassifier": "Decision Tree",
     "RandomForestClassifier": "Random Forest",
 
-    "LinearRegression": "Linear Regression",
-    "KNeighborsRegressor": "K-Nearest Neighbors",
-    "SGDRegressor": "SGDRegressor",  # TODO: naam/verwijderen?
-    "SVR": "Support Vector Machine",
-    "MLPRegressor": "Neural Network",
-    "DecisionTreeRegressor": "Decision Tree",
-    "RandomForestRegressor": "Random Forest"
+    "LinearRegression": " Linear Regression",
+    "KNeighborsRegressor": " K-Nearest Neighbors",
+    "SGDRegressor": " SGDRegressor",  # TODO: naam/verwijderen?
+    "SVR": " Support Vector Machine",
+    "MLPRegressor": " Neural Network",
+    "DecisionTreeRegressor": " Decision Tree",
+    "RandomForestRegressor": " Random Forest"
 }
 
 
@@ -67,7 +67,19 @@ def plot_bars(data, filename, model_type="all"):
     bars = plt.barh([model_names[model] for model in data["model"]],
                     data["accuracy"], color=colors, edgecolor="black",
                     alpha=0.8)
-    plt.bar_label(bars, label_type="center", fmt="%.2f")
+
+    # If the accuracy is lower than 5%, place the label on the right side of
+    # the bar, otherwise place it in the middle
+    for bar in bars:
+        width = bar.get_width()
+
+        if width < 6:
+            plt.text(width + 0.5, bar.get_y() + bar.get_height() / 2,
+                     f"{width:.2f}%", va="center")
+        else:
+            plt.text(width / 2, bar.get_y() + bar.get_height() / 2,
+                     f"{width:.2f}%", va="center", ha="center")
+
     plt.title(title)
     plt.xlabel("Nauwkeurigheid (%)")
 
