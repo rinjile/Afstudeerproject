@@ -15,7 +15,8 @@ import sys
 import os
 import datetime
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression, SGDClassifier, LinearRegression, SGDRegressor
+from sklearn.linear_model import LogisticRegression, SGDClassifier, \
+    LinearRegression, SGDRegressor
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.svm import SVC, SVR
@@ -73,37 +74,44 @@ def prob2target(prob):
 
 
 def save_learning_curve(model, learning_curve_params, ci=95):
-    train_sizes, train_scores, validation_scores = learning_curve(model, **learning_curve_params)
+    train_sizes, train_scores, validation_scores = learning_curve(
+        model, **learning_curve_params)
     train_ci_lower = np.percentile(train_scores, (100 - ci) / 2, axis=1)
     train_ci_upper = np.percentile(train_scores, (100 + ci) / 2, axis=1)
-    validation_ci_lower = np.percentile(validation_scores, (100 - ci) / 2, axis=1)
-    validation_ci_upper = np.percentile(validation_scores, (100 + ci) / 2, axis=1)
+    validation_ci_lower = np.percentile(validation_scores, (100 - ci) / 2,
+                                        axis=1)
+    validation_ci_upper = np.percentile(validation_scores, (100 + ci) / 2,
+                                        axis=1)
 
-    with open(f"results/learning_curve_{model.estimator.__class__.__name__}.csv", "w") as f:
-        f.write(f"train_size,train_mean,train_ci_lower,train_ci_upper,validation_mean,validation_ci_lower,validation_ci_upper\n")
+    with open(f"results/learning_curve_{model.estimator.__class__.__name__}"
+              ".csv", "w") as f:
+        f.write("train_size,train_mean,train_ci_lower,train_ci_upper,"
+                "validation_mean,validation_ci_lower,validation_ci_upper\n")
 
         for i in range(train_sizes.shape[0]):
-            f.write(f"{train_sizes[i]},"
-                    f"{train_scores[i].mean()},"
-                    f"{train_ci_lower[i]},"
-                    f"{train_ci_upper[i]},"
+            f.write(f"{train_sizes[i]}," f"{train_scores[i].mean()},"
+                    f"{train_ci_lower[i]}," f"{train_ci_upper[i]},"
                     f"{validation_scores[i].mean()},"
                     f"{validation_ci_lower[i]},"
                     f"{validation_ci_upper[i]}\n")
 
 
-def save_accuracies(classification_accuracies, regression_accuracies, filename):
+def save_accuracies(classification_accuracies, regression_accuracies,
+                    filename):
     with open(f"results/{filename}.csv", "w") as f:
         f.write("type,model,accuracy,hyperparameters\n")
 
         for (model, accuracy) in classification_accuracies:
-            f.write(f"classification,{model.__class__.__name__},{accuracy * 100:.2f},\"{model.get_params()}\"\n")
+            f.write(f"classification,{model.__class__.__name__},"
+                    f"{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
         for (model, accuracy) in regression_accuracies:
-            f.write(f"regression,{model.__class__.__name__},{accuracy * 100:.2f},\"{model.get_params()}\"\n")
+            f.write(f"regression,{model.__class__.__name__},"
+                    f"{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
 
-def classification_prediction(data, targets, hyperparams_tuning, verbose, train_size=0.8):
+def classification_prediction(data, targets, hyperparams_tuning, verbose,
+                              train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -113,10 +121,12 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        (LogisticRegression(max_iter=10**4, random_state=random_seed),  # Max_iter to prevent most convergence warnings
+        # Max_iter to prevent most convergence warnings
+        (LogisticRegression(max_iter=10**4, random_state=random_seed),
          {
              "estimator__C": [0.1, 0.5, 1, 3],
-             "estimator__solver": ["lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"]
+             "estimator__solver": ["lbfgs", "liblinear", "newton-cg",
+                                   "newton-cholesky", "sag", "saga"]
          }),
         (GaussianNB(),
          {}),  # No hyperparameters to tune
@@ -128,24 +138,29 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
          {
              "estimator__alpha": [0.01, 0.1, 0.5, 1, 2],
              "estimator__fit_prior": [True, False],
-             "estimator__class_prior": [None, [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.5, 0.5]]
+             "estimator__class_prior": [None, [0.2, 0.8], [0.3, 0.7],
+                                        [0.4, 0.6], [0.5, 0.5]]
          }),
         (KNeighborsClassifier(),
          {
-             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],  # TODO: experiment met 1 tm 10
+             # TODO: experiment met 1 tm 10
+             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
              "estimator__weights": ["uniform", "distance"],
              # "estimator__algorithm": ["ball_tree", "kd_tree", "brute"],
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
              "estimator__p": [1, 2, 3]
          }),
-        (SGDClassifier(loss="log_loss", random_state=random_seed),  # TODO: niet doen?
+        # TODO: niet doen?
+        (SGDClassifier(loss="log_loss", random_state=random_seed),
          {
              # "estimator__penalty": ["l2", "l1", "elasticnet"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
-             "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
+             "estimator__learning_rate": ["constant", "optimal", "invscaling",
+                                          "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
-        (SVC(probability=True, max_iter=1000, random_state=random_seed),  # TODO: experiment zonder max_iter
+        # TODO: experiment zonder max_iter
+        (SVC(probability=True, max_iter=1000, random_state=random_seed),
          {
              # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
@@ -154,7 +169,9 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
          }),
         (MLPClassifier(random_state=random_seed),
          {
-             "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2), (100, 2), (500, 2), (50, 3), (100, 3), (500, 3)],
+             "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2),
+                                               (100, 2), (500, 2), (50, 3),
+                                               (100, 3), (500, 3)],
              "estimator__activation": ["identity", "logistic", "tanh", "relu"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
          }),
@@ -190,9 +207,11 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
 
     accuracies = []
 
-    for (model, params) in tqdm(models, desc="Predicting the result (classification)"):
+    for (model, params) in tqdm(models, desc="Predicting the result "
+                                             "(classification)"):
         if hyperparams_tuning:
-            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5, scoring="accuracy", verbose=verbose)
+            model = GridSearchCV(OneVsRestClassifier(model), params, cv=5,
+                                 scoring="accuracy", verbose=verbose)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -211,15 +230,18 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose, train_
 
 
 def classification(data, hyperparams_tuning, verbose):
-    targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False, header=None)
+    targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False,
+                          header=None)
     # data = data.head(50)
     # targets = targets.head(50)
 
-    accuracies = classification_prediction(data, targets, hyperparams_tuning, verbose)
+    accuracies = classification_prediction(data, targets, hyperparams_tuning,
+                                           verbose)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
-def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size=0.8):
+def regression_prediction(data, targets, hyperparams_tuning, verbose,
+                          train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
     X_train = data.iloc[:train_len]
@@ -228,19 +250,22 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
+    # TODO: hyperparams checken
     models = [
         (LinearRegression(),
          {}),  # No hyperparameters to tune
         (KNeighborsRegressor(),
          {
-             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],  # TODO: experiment met 1 tm 10
+             # TODO: experiment met 1 tm 10
+             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
          }),
         (SGDRegressor(random_state=random_seed),  # TODO: niet doen?
          {
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
-             "estimator__learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
+             "estimator__learning_rate": ["constant", "optimal", "invscaling",
+                                          "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
         (SVR(),  # TODO: max_iter?
@@ -251,23 +276,26 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
          }),
         (MLPRegressor(random_state=random_seed),
          {
-             "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2), (100, 2), (500, 2), (50, 3), (100, 3),
-                                               (500, 3)],
+             "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2),
+                                               (100, 2), (500, 2), (50, 3),
+                                               (100, 3), (500, 3)],
              "estimator__activation": ["identity", "logistic", "tanh", "relu"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
          }),
         (DecisionTreeRegressor(random_state=random_seed),
          {
-             "estimator__criterion": ["squared_error", "friedman_mse", "absolute_error", "poisson"],
+             "estimator__criterion": ["squared_error", "friedman_mse",
+                                      "absolute_error", "poisson"],
              "estimator__splitter": ["best", "random"],
              "estimator__max_features": [None, "sqrt", "log2"],
          }),
         (RandomForestRegressor(random_state=random_seed),
          {
              "estimator__n_estimators": [10, 50, 100],
-             "estimator__criterion": ["squared_error", "friedman_mse", "absolute_error", "poisson"],
+             "estimator__criterion": ["squared_error", "friedman_mse",
+                                      "absolute_error", "poisson"],
              "estimator__max_features": [None, "sqrt", "log2", 1]  # TODO: 1?
-         }),
+         })
 
         # (GradientBoostingRegressor(random_state=random_seed),
         #  {})
@@ -286,10 +314,13 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
 
     accuracies = []
 
-    for (model, params) in tqdm(models, desc="Predicting the score (regression)"):
+    for (model, params) in tqdm(models,
+                                desc="Predicting the score (regression)"):
         if hyperparams_tuning:
             # TODO: andere scoring?
-            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5, scoring="neg_mean_absolute_error", verbose=verbose)
+            model = GridSearchCV(MultiOutputRegressor(model), params, cv=5,
+                                 scoring="neg_mean_absolute_error",
+                                 verbose=verbose)
             model.fit(X_train, y_train)
             model = model.best_estimator_
         else:
@@ -299,7 +330,8 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
         y_pred = pd.DataFrame(model.predict(X_test))
 
         # Round to the nearest integer
-        y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5 else np.ceil(x)).astype(int)
+        y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5
+                                 else np.ceil(x)).astype(int)
 
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
@@ -310,11 +342,13 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose, train_size
 
 
 def regression(data, hyperparams_tuning, verbose):
-    targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False, header=None)
+    targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False,
+                          header=None)
     # data = data.head(500)
     # targets = targets.head(500)
 
-    accuracies = regression_prediction(data, targets, hyperparams_tuning, verbose)
+    accuracies = regression_prediction(data, targets, hyperparams_tuning,
+                                       verbose)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
@@ -340,7 +374,8 @@ def main():
             print("Verbose mode is enabled.")
 
     data = pd.read_csv("data/ml_data.csv", low_memory=False)
-    classification_accuracies = classification(data, hyperparams_tuning, verbose)
+    classification_accuracies = classification(data, hyperparams_tuning,
+                                               verbose)
     regression_accuracies = regression(data, hyperparams_tuning, verbose)
     # classification_accuracies = []
     # regression_accuracies = []
