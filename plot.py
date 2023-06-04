@@ -61,9 +61,12 @@ def plot_bars(data, model_type="all"):
         title = "Nauwkeurigheid van verschillende modellen"
 
     data = data.sort_values(by="accuracy", ascending=True)
-    colors = ["royalblue" if row["type"] == "classification" else "limegreen" for (_, row) in data.iterrows()]
+    colors = ["royalblue" if row["type"] == "classification" else "limegreen"
+              for (_, row) in data.iterrows()]
 
-    bars = plt.barh([model_names[model] for model in data["model"]], data["accuracy"], color=colors, edgecolor="black", alpha=0.8)
+    bars = plt.barh([model_names[model] for model in data["model"]],
+                    data["accuracy"], color=colors, edgecolor="black",
+                    alpha=0.8)
     plt.bar_label(bars, label_type="center", fmt="%.2f")
     plt.title(title)
     plt.xlabel("Nauwkeurigheid (%)")
@@ -72,7 +75,8 @@ def plot_bars(data, model_type="all"):
     if model_type == "all" and len(data["type"].unique()) == 2:
         labels = ["Classificator", "Regressor"]
         colors = ["royalblue", "limegreen"]
-        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[i], alpha=0.8) for i in range(len(labels))]
+        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[i], alpha=0.8)
+                   for i in range(len(labels))]
         plt.legend(handles, labels, loc="best")
 
     plt.tight_layout()
@@ -85,11 +89,15 @@ def plot_learning_curve(data, model):
     if model in classifiers:
         data = data.apply(lambda x: x * 100 if x.name != "train_size" else x)
 
-    plt.plot(data["train_size"], data["train_mean"], label="Train-score", marker="o", color="royalblue")
-    plt.fill_between(data["train_size"], data["train_ci_lower"], data["train_ci_upper"], label="95% CI (train)",
+    plt.plot(data["train_size"], data["train_mean"], label="Train-score",
+             marker="o", color="royalblue")
+    plt.fill_between(data["train_size"], data["train_ci_lower"],
+                     data["train_ci_upper"], label="95% CI (train)",
                      alpha=0.2, color="royalblue")
-    plt.plot(data["train_size"], data["validation_mean"], label="Validatie-score", marker="o", color="limegreen")
-    plt.fill_between(data["train_size"], data["validation_ci_lower"], data["validation_ci_upper"], label="95% CI (validatie)",
+    plt.plot(data["train_size"], data["validation_mean"],
+             label="Validatie-score", marker="o", color="limegreen")
+    plt.fill_between(data["train_size"], data["validation_ci_lower"],
+                     data["validation_ci_upper"], label="95% CI (validatie)",
                      alpha=0.2, color="limegreen")
 
     plt.title(f"{model_names[model]}: leercurve met 5-voudige kruisvalidatie")

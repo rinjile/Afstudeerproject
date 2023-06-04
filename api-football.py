@@ -60,14 +60,16 @@ def check_file_exists(filename):
 def request(path, query, sleep=0.2):
     """
     Sends a get request to the API. The API has a limit of 300 requests per
-    minute, so the function sleeps for 0.2 seconds to prevent exceeding the limit.
+    minute, so the function sleeps for 0.2 seconds to prevent exceeding the
+    limit.
 
     :param path: Path to the endpoint (str).
     :param query: Query parameters (dict).
     :param sleep: Time to sleep (float).
     :return: Response from the API (requests.Response).
     """
-    response = requests.request("GET", URL + path, headers=HEADERS, params=query)
+    response = requests.request("GET", URL + path, headers=HEADERS,
+                                params=query)
     time.sleep(sleep)  # Prevent exceeding API's requests/min limit
     return response
 
@@ -84,7 +86,8 @@ def get_fixtures(ids, start_season=2015, end_season=2021):
     fixtures = pd.DataFrame()
 
     for league in tqdm(ids.keys(), desc="Leagues"):
-        for season in tqdm(range(start_season, end_season + 1), leave=False, desc="Seasons"):
+        for season in tqdm(range(start_season, end_season + 1), leave=False,
+                           desc="Seasons"):
             query = {"league": ids[league], "season": season}
             response = request("/fixtures", query).json()
 
@@ -92,7 +95,8 @@ def get_fixtures(ids, start_season=2015, end_season=2021):
                 print(f"Error ({league}, {season}): {response['errors']}")
                 return fixtures
             else:
-                new_fixtures = pd.json_normalize(response, record_path=["response"])
+                new_fixtures = pd.json_normalize(response,
+                                                 record_path=["response"])
                 fixtures = pd.concat([fixtures, new_fixtures])
 
     return fixtures
@@ -113,7 +117,8 @@ def get_fixture_stats():
             break
         else:
             new_stats = pd.json_normalize(response,
-                                          record_path=["response", "statistics"],
+                                          record_path=["response",
+                                                       "statistics"],
                                           meta=[["response", "team", "id"],
                                                 ["response", "team", "name"]])
             new_stats.insert(0, "fixture.id", idx)
@@ -123,7 +128,8 @@ def get_fixture_stats():
 
 
 def main():
-    usage_message = "Usage: python3 api-football.py --fixtures/--stats <file name>"
+    usage_message = "Usage: python3 api-football.py --fixtures/--stats " \
+                    "<file name>"
 
     if len(sys.argv) != 3:
         print(usage_message)
