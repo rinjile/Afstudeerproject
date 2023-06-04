@@ -63,7 +63,6 @@ def prob2target(prob):
         max_prob = max(row)
 
         if row.value_counts()[max_prob] > 1:
-            # TODO: niet random doen?
             max_indices = np.where(row == max_prob)[0]
             prob.iloc[i] = [0, 0, 0]
             prob.iloc[i][np.random.choice(max_indices)] = 1
@@ -250,7 +249,6 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
     y_test = targets.iloc[train_len:]
     y_test.reset_index(drop=True, inplace=True)
 
-    # TODO: hyperparams checken
     models = [
         (LinearRegression(),
          {}),  # No hyperparameters to tune
@@ -268,7 +266,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
                                           "adaptive"],
              "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
-        (SVR(),  # TODO: max_iter?
+        (SVR(max_iter=1000),  # TODO: experiment zonder max_iter
          {
              # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
@@ -294,7 +292,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
              "estimator__n_estimators": [10, 50, 100],
              "estimator__criterion": ["squared_error", "friedman_mse",
                                       "absolute_error", "poisson"],
-             "estimator__max_features": [None, "sqrt", "log2", 1]  # TODO: 1?
+             "estimator__max_features": [None, "sqrt", "log2", 1]
          })
 
         # (GradientBoostingRegressor(random_state=random_seed),
@@ -332,6 +330,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
         # Round to the nearest integer
         y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5
                                  else np.ceil(x)).astype(int)
+        # (TODO: experiment met afronden naar 0)
 
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
