@@ -283,7 +283,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
         (DecisionTreeRegressor(random_state=random_seed),
          {
              "estimator__criterion": ["squared_error", "friedman_mse",
-                                      "absolute_error", "poisson"],
+                                      "poisson"],
              "estimator__splitter": ["best", "random"],
              "estimator__max_features": [None, "sqrt", "log2"],
          }),
@@ -291,8 +291,8 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
          {
              "estimator__n_estimators": [10, 50, 100],
              "estimator__criterion": ["squared_error", "friedman_mse",
-                                      "absolute_error", "poisson"],
-             "estimator__max_features": [None, "sqrt", "log2", 1]
+                                      "poisson"],
+             "estimator__max_features": [None, "sqrt", "log2"]
          })
 
         # (GradientBoostingRegressor(random_state=random_seed),
@@ -376,8 +376,8 @@ def main():
     classification_accuracies = classification(data, hyperparams_tuning,
                                                verbose)
     regression_accuracies = regression(data, hyperparams_tuning, verbose)
-    # classification_accuracies = []
-    # regression_accuracies = []
+    classification_accuracies = []
+    regression_accuracies = []
     save_accuracies(classification_accuracies, regression_accuracies, filename)
 
 
