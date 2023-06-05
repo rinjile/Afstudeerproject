@@ -15,8 +15,7 @@ import sys
 import os
 import datetime
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression, SGDClassifier, \
-    LinearRegression, SGDRegressor
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.svm import SVC, SVR
@@ -149,15 +148,6 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose,
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
              "estimator__p": [1, 2, 3]
          }),
-        # TODO: niet doen?
-        (SGDClassifier(loss="log_loss", random_state=random_seed),
-         {
-             # "estimator__penalty": ["l2", "l1", "elasticnet"],
-             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
-             "estimator__learning_rate": ["constant", "optimal", "invscaling",
-                                          "adaptive"],
-             "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
-         }),
         # TODO: experiment zonder max_iter
         (SVC(probability=True, max_iter=1000, random_state=random_seed),
          {
@@ -258,13 +248,6 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
              "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
-         }),
-        (SGDRegressor(random_state=random_seed),  # TODO: niet doen?
-         {
-             "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
-             "estimator__learning_rate": ["constant", "optimal", "invscaling",
-                                          "adaptive"],
-             "estimator__power_t": [0.1, 0.2, 0.3, 0.4, 0.5]
          }),
         (SVR(max_iter=1000),  # TODO: experiment zonder max_iter
          {

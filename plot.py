@@ -20,7 +20,6 @@ classifiers = [
     "BernoulliNB",
     "MultinomialNB",
     "KNeighborsClassifier",
-    "SGDClassifier",
     "SVC",
     "MLPClassifier",
     "DecisionTreeClassifier",
@@ -34,7 +33,6 @@ model_names = {
     "BernoulliNB": "Bernoulli Naive Bayes",
     "MultinomialNB": "Multinomial Naive Bayes",
     "KNeighborsClassifier": "K-Nearest Neighbors",
-    "SGDClassifier": "Stochastic Logistic Regression",  # TODO: verwijderen?
     "SVC": "Support Vector Machine",
     "MLPClassifier": "Neural Network",
     "DecisionTreeClassifier": "Decision Tree",
@@ -42,7 +40,6 @@ model_names = {
 
     "LinearRegression": " Linear Regression",
     "KNeighborsRegressor": " K-Nearest Neighbors",
-    "SGDRegressor": " SGDRegressor",  # TODO: naam/verwijderen?
     "SVR": " Support Vector Machine",
     "MLPRegressor": " Neural Network",
     "DecisionTreeRegressor": " Decision Tree",
