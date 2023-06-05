@@ -376,8 +376,8 @@ def main():
     classification_accuracies = classification(data, hyperparams_tuning,
                                                verbose)
     regression_accuracies = regression(data, hyperparams_tuning, verbose)
-    classification_accuracies = []
-    regression_accuracies = []
+    # classification_accuracies = []
+    # regression_accuracies = []
     save_accuracies(classification_accuracies, regression_accuracies, filename)
 
 
