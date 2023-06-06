@@ -27,6 +27,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.model_selection import GridSearchCV, learning_curve
 
 random_seed = 10
+np.random.seed(random_seed)  # TODO: opnieuw experimenteren (classification)
 
 
 def check_file_exists(filename):
@@ -141,8 +142,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose,
          }),
         (KNeighborsClassifier(),
          {
-             # TODO: experiment met 1 tm 10
-             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
+             "estimator__n_neighbors": range(1, 11),
              "estimator__weights": ["uniform", "distance"],
              # "estimator__algorithm": ["ball_tree", "kd_tree", "brute"],
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
@@ -244,8 +244,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
          {}),  # No hyperparameters to tune
         (KNeighborsRegressor(),
          {
-             # TODO: experiment met 1 tm 10
-             "estimator__n_neighbors": [1, 2, 4, 5, 7, 8, 10],
+             "estimator__n_neighbors": range(1, 11),
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
          }),
@@ -313,7 +312,9 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
         # Round to the nearest integer
         y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5
                                  else np.ceil(x)).astype(int)
-        # (TODO: experiment met afronden naar 0)
+        # (TODO: houden of niet)
+        # Set negative values to 0
+        y_pred = y_pred.applymap(lambda x: 0 if x < 0 else x)
 
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
