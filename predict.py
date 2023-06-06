@@ -218,8 +218,8 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose,
     return accuracies
 
 
-def classification(data, hyperparams_tuning, verbose):
-    targets = pd.read_csv("data/ml_targets_result.csv", low_memory=False,
+def classification(data, n, hyperparams_tuning, verbose):
+    targets = pd.read_csv(f"data/ml_targets_result{n}.csv", low_memory=False,
                           header=None)
     # data = data.head(50)
     # targets = targets.head(50)
@@ -324,8 +324,8 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
     return accuracies
 
 
-def regression(data, hyperparams_tuning, verbose):
-    targets = pd.read_csv("data/ml_targets_score.csv", low_memory=False,
+def regression(data, n, hyperparams_tuning, verbose):
+    targets = pd.read_csv(f"data/ml_targets_score{n}.csv", low_memory=False,
                           header=None)
     # data = data.head(500)
     # targets = targets.head(500)
@@ -337,10 +337,11 @@ def regression(data, hyperparams_tuning, verbose):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 predict.py <file name> [--notuning] [--verbose]")
+        print("Usage: python3 predict.py <n> <file name> [--notuning] [--verbose]")
         sys.exit(1)
 
-    filename = sys.argv[1]
+    n = int(sys.argv[1])
+    filename = sys.argv[2]
     check_file_exists(filename)
 
     print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
@@ -348,7 +349,7 @@ def main():
     hyperparams_tuning = True
     verbose = 0
 
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 3:
         if "--notuning" in sys.argv:
             hyperparams_tuning = False
             print("Hyperparameters tuning is disabled.")
@@ -356,10 +357,10 @@ def main():
             verbose = 3
             print("Verbose mode is enabled.")
 
-    data = pd.read_csv("data/ml_data.csv", low_memory=False)
-    classification_accuracies = classification(data, hyperparams_tuning,
+    data = pd.read_csv(f"data/ml_data{n}.csv", low_memory=False)
+    classification_accuracies = classification(data, n, hyperparams_tuning,
                                                verbose)
-    regression_accuracies = regression(data, hyperparams_tuning, verbose)
+    regression_accuracies = regression(data, n, hyperparams_tuning, verbose)
     # classification_accuracies = []
     # regression_accuracies = []
     save_accuracies(classification_accuracies, regression_accuracies, filename)
