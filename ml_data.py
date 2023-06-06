@@ -11,6 +11,7 @@ TODO
 import pandas as pd
 from tqdm import tqdm
 import os
+import sys
 
 ERROR = []
 
@@ -178,6 +179,12 @@ def create_data_and_targets(fixtures, fixture_stats, n=5):
 
 
 def main():
+    if len(sys.argv) < 2:
+        print("Usage: python3 ml_data.py <n>")
+        sys.exit(1)
+
+    n = int(sys.argv[1])
+
     fixtures = pd.read_csv("data/fixtures.csv", low_memory=False)
     # Only use the top 5 leagues
     fixtures = fixtures[fixtures["league.name"].isin([
@@ -190,11 +197,11 @@ def main():
     fixture_stats = pd.read_csv("data/fixture_stats.csv", low_memory=False)
 
     data, targets_result, targets_score = create_data_and_targets(
-        fixtures, fixture_stats)
-    data.to_csv("data/ml_data.csv", index=False)
-    targets_result.to_csv("data/ml_targets_result.csv", index=False,
+        fixtures, fixture_stats, n=n)
+    data.to_csv(f"data/ml_data{n}.csv", index=False)
+    targets_result.to_csv(f"data/ml_targets_result{n}.csv", index=False,
                           header=False)
-    targets_score.to_csv("data/ml_targets_score.csv", index=False,
+    targets_score.to_csv(f"data/ml_targets_score{n}.csv", index=False,
                          header=False)
 
     if os.path.exists("errors.txt"):
