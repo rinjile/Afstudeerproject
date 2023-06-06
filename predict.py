@@ -121,6 +121,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose,
 
     models = [
         # Max_iter to prevent most convergence warnings
+        # TODO: experiment zonder max_iter
         (LogisticRegression(max_iter=10**4, random_state=random_seed),
          {
              "estimator__C": [0.1, 0.5, 1, 3],
@@ -148,7 +149,6 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose,
              # "estimator__leaf_size": [10, 20, 30, 40, 50],
              "estimator__p": [1, 2, 3]
          }),
-        # TODO: experiment zonder max_iter
         (SVC(probability=True, max_iter=1000, random_state=random_seed),
          {
              # "estimator__C": [0.1, 1, 10, 100],
@@ -248,7 +248,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
          }),
-        (SVR(max_iter=1000),  # TODO: experiment zonder max_iter
+        (SVR(max_iter=1000),
          {
              # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
@@ -312,7 +312,6 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
         # Round to the nearest integer
         y_pred = y_pred.applymap(lambda x: np.floor(x) if x % 1 < 0.5
                                  else np.ceil(x)).astype(int)
-        # (TODO: houden of niet)
         # Set negative values to 0
         y_pred = y_pred.applymap(lambda x: 0 if x < 0 else x)
 
