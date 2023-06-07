@@ -57,6 +57,7 @@ def plot_bars(data, filename, n, model_type="all"):
     else:
         title = "Nauwkeurigheid van verschillende modellen"
 
+    data = data.sort_values(by="type", ascending=False)
     data = data.sort_values(by="accuracy", ascending=True)
     colors = ["royalblue" if row["type"] == "classification" else "limegreen"
               for (_, row) in data.iterrows()]
@@ -147,6 +148,7 @@ def main():
             plot_bars(data, filename, n)
             plot_bars(data, filename, n, model_type="classification")
             plot_bars(data, filename, n, model_type="regression")
+            print("Plotted bar charts")
     elif sys.argv[1] == "--lc":
         if len(sys.argv) < 3:
             print("Usage: python plot.py --lc <n> [file]")
