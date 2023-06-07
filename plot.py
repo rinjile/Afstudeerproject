@@ -128,6 +128,10 @@ def main():
         print("       python plot.py --lc <n> [file]")
         sys.exit(1)
 
+    if sys.argv[1] == "--help":
+        print("Usage: python plot.py --bar <n> <file>")
+        print("       python plot.py --lc <n> [file]")
+        sys.exit(0)
     if sys.argv[1] == "--bar":
         if len(sys.argv) < 4:
             print("Usage: python plot.py --bar <n> <file>")
