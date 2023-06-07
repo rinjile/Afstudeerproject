@@ -123,15 +123,16 @@ def plot_learning_curve(data, model, n):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python plot.py --bar <n> <file>")
-        print("       python plot.py --lc <n> [file]")
+    usage_message = "Usage: python3 plot.py --bar <n> <file>\n" \
+                    "       python3 plot.py --lc <n> [file]"
+
+    if len(sys.argv) > 1 and sys.argv[1] == "--help":
+        print(usage_message)
+        sys.exit(0)
+    if len(sys.argv) < 3:
+        print(usage_message)
         sys.exit(1)
 
-    if sys.argv[1] == "--help":
-        print("Usage: python plot.py --bar <n> <file>")
-        print("       python plot.py --lc <n> [file]")
-        sys.exit(0)
     elif sys.argv[1] == "--bar":
         if len(sys.argv) < 4:
             print("Usage: python plot.py --bar <n> <file>")
@@ -168,6 +169,9 @@ def main():
 
             data = pd.read_csv(f"results/n{n}/{file}")
             plot_learning_curve(data, model, n)
+    else:
+        print(usage_message)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

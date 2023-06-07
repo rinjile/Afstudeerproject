@@ -128,10 +128,13 @@ def get_fixture_stats():
 
 
 def main():
-    usage_message = "Usage: python3 api-football.py --fixtures/--stats " \
-                    "<file name>"
+    usage_message = "Usage: python3 api-football.py --fixtures <file name>\n" \
+                    "       python3 api-football.py --stats <file name>"
 
-    if len(sys.argv) != 3:
+    if len(sys.argv) > 1 and sys.argv[1] == "--help":
+        print(usage_message)
+        sys.exit(0)
+    if len(sys.argv) < 3:
         print(usage_message)
         sys.exit(1)
 
