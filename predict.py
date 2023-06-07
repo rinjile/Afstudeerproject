@@ -82,8 +82,8 @@ def save_learning_curve(model, learning_curve_params, n, ci=95):
     validation_ci_upper = np.percentile(validation_scores, (100 + ci) / 2,
                                         axis=1)
 
-    with open(f"results/learning_curve_{model.estimator.__class__.__name__}{n}"
-              ".csv", "w") as f:
+    with open(f"results/n{n}/learning_curve_"
+              f"{model.estimator.__class__.__name__}{n}.csv", "w") as f:
         f.write("train_size,train_mean,train_ci_lower,train_ci_upper,"
                 "validation_mean,validation_ci_lower,validation_ci_upper\n")
 
@@ -97,7 +97,7 @@ def save_learning_curve(model, learning_curve_params, n, ci=95):
 
 def save_accuracies(classification_accuracies, regression_accuracies, n,
                     filename):
-    with open(f"results/{filename}{n}.csv", "w") as f:
+    with open(f"results/n{n}/{filename}{n}.csv", "w") as f:
         f.write("type,model,accuracy,hyperparameters\n")
 
         for (model, accuracy) in classification_accuracies:
@@ -120,9 +120,7 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
     y_test.reset_index(drop=True, inplace=True)
 
     models = [
-        # Max_iter to prevent most convergence warnings
-        # TODO: experiment zonder max_iter
-        (LogisticRegression(max_iter=10**4, random_state=random_seed),
+        (LogisticRegression(random_state=random_seed),
          {
              "estimator__C": [0.1, 0.5, 1, 3],
              "estimator__solver": ["lbfgs", "liblinear", "newton-cg",
@@ -130,7 +128,7 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
          }),
         (GaussianNB(),
          {}),  # No hyperparameters to tune
-        (BernoulliNB(),  # Boolean features (TODO: deze doen?)
+        (BernoulliNB(),  # (TODO: deze doen?)
          {
                 "estimator__alpha": [0.01, 0.1, 0.5, 1, 2],
          }),
