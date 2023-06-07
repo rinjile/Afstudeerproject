@@ -82,7 +82,7 @@ def save_learning_curve(model, learning_curve_params, n, ci=95):
     validation_ci_upper = np.percentile(validation_scores, (100 + ci) / 2,
                                         axis=1)
 
-    with open(f"results/learning_curve{n}_{model.estimator.__class__.__name__}"
+    with open(f"results/learning_curve_{model.estimator.__class__.__name__}{n}"
               ".csv", "w") as f:
         f.write("train_size,train_mean,train_ci_lower,train_ci_upper,"
                 "validation_mean,validation_ci_lower,validation_ci_upper\n")

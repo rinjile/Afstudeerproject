@@ -47,7 +47,7 @@ model_names = {
 }
 
 
-def plot_bars(data, filename, model_type="all"):
+def plot_bars(data, filename, n, model_type="all"):
     if model_type == "classification":
         data = data[data["type"] == model_type]
         title = "Nauwkeurigheid van verschillende classificators"
@@ -89,11 +89,11 @@ def plot_bars(data, filename, model_type="all"):
         plt.legend(handles, labels, loc="best")
 
     plt.tight_layout()
-    plt.savefig(f"plots/{filename}_{model_type}.png", dpi=1000)
+    plt.savefig(f"plots/n{n}/{filename}_{model_type}.png", dpi=1000)
     plt.clf()  # Clear the figure
 
 
-def plot_learning_curve(data, model):
+def plot_learning_curve(data, model, n):
     # Multiply the data by 100 to get the accuracy in percentages
     if model in classifiers:
         data = data.apply(lambda x: x * 100 if x.name != "train_size" else x)
@@ -118,40 +118,52 @@ def plot_learning_curve(data, model):
         plt.ylabel("Gemiddelde absolute fout (negatie)")
 
     plt.legend(loc="best")
-    plt.savefig(f"plots/learning_curve_{model}.png", dpi=1000)
+    plt.savefig(f"plots/n{n}/learning_curve_{model}{n}.png", dpi=1000)
     plt.clf()  # Clear the figure
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python plot.py --bar <file>")
-        print("       python plot.py --lc [file]")
-        return
+        print("Usage: python plot.py --bar <n> <file>")
+        print("       python plot.py --lc <n> [file]")
+        sys.exit(1)
 
     if sys.argv[1] == "--bar":
-        if len(sys.argv) < 3:
-            print("Usage: python plot.py --bar <file>")
-            return
+        if len(sys.argv) < 4:
+            print("Usage: python plot.py --bar <n> <file>")
+            sys.exit(1)
         else:
-            data = pd.read_csv(sys.argv[2])
-            # File name without the dictionary and extension
-            filename = sys.argv[2].split("/")[1].split(".")[0]
+            data = pd.read_csv(sys.argv[3])
 
-            plot_bars(data, filename)
-            plot_bars(data, filename, model_type="classification")
-            plot_bars(data, filename, model_type="regression")
+            # File name without the dictionary and extension
+            filename = sys.argv[3].split("/")[2].split(".")[0]
+            n = int(sys.argv[2])
+
+            plot_bars(data, filename, n)
+            plot_bars(data, filename, n, model_type="classification")
+            plot_bars(data, filename, n, model_type="regression")
     elif sys.argv[1] == "--lc":
-        if len(sys.argv) > 2:
-            file = sys.argv[2]
-            files = [file.split("/")[1]]
+        if len(sys.argv) < 3:
+            print("Usage: python plot.py --lc <n> [file]")
+            sys.exit(1)
+
+        n = int(sys.argv[2])
+
+        if len(sys.argv) > 3:
+            file = sys.argv[3]
+            files = [file.split("/")[2]]
         else:
-            files = os.listdir("results")
+            files = os.listdir(f"results/n{n}")
             files = [file for file in files if file[:14] == "learning_curve"]
 
         for file in tqdm(files, desc="Plotting learning curves"):
             model = file.split("_")[-1].split(".")[0]
-            data = pd.read_csv(f"results/{file}")
-            plot_learning_curve(data, model)
+            # Remove the number at the end of the file name
+            model = model[:-1] if model[-1].isdigit() else model
+            model = model[:-1] if model[-1].isdigit() else model
+
+            data = pd.read_csv(f"results/n{n}/{file}")
+            plot_learning_curve(data, model, n)
 
 
 if __name__ == "__main__":
