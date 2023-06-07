@@ -13,6 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 import sys
 import os
+import time
 import datetime
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -341,6 +342,7 @@ def main():
     filename = sys.argv[2]
     check_file_exists(filename)
 
+    start_time = time.time()
     print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
 
     hyperparams_tuning = True
@@ -362,6 +364,9 @@ def main():
     # regression_accuracies = []
     save_accuracies(classification_accuracies, regression_accuracies, n,
                     filename)
+
+    print(f"Ended at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
+    print(f'Execution time: {((time.time() - start_time) / 3600):.2f} hours.')
 
 
 if __name__ == "__main__":
