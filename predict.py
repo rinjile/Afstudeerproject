@@ -27,7 +27,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.model_selection import GridSearchCV, learning_curve
 
 random_seed = 10
-np.random.seed(random_seed)  # TODO: opnieuw experimenteren (classification)
+np.random.seed(random_seed)
 
 
 def check_file_exists(filename):
@@ -72,7 +72,7 @@ def prob2target(prob):
     return prob.astype(int)
 
 
-def save_learning_curve(model, learning_curve_params, ci=95):
+def save_learning_curve(model, learning_curve_params, n, ci=95):
     train_sizes, train_scores, validation_scores = learning_curve(
         model, **learning_curve_params)
     train_ci_lower = np.percentile(train_scores, (100 - ci) / 2, axis=1)
@@ -82,7 +82,7 @@ def save_learning_curve(model, learning_curve_params, ci=95):
     validation_ci_upper = np.percentile(validation_scores, (100 + ci) / 2,
                                         axis=1)
 
-    with open(f"results/learning_curve_{model.estimator.__class__.__name__}"
+    with open(f"results/learning_curve{n}_{model.estimator.__class__.__name__}"
               ".csv", "w") as f:
         f.write("train_size,train_mean,train_ci_lower,train_ci_upper,"
                 "validation_mean,validation_ci_lower,validation_ci_upper\n")
@@ -95,9 +95,9 @@ def save_learning_curve(model, learning_curve_params, ci=95):
                     f"{validation_ci_upper[i]}\n")
 
 
-def save_accuracies(classification_accuracies, regression_accuracies,
+def save_accuracies(classification_accuracies, regression_accuracies, n,
                     filename):
-    with open(f"results/{filename}.csv", "w") as f:
+    with open(f"results/{filename}{n}.csv", "w") as f:
         f.write("type,model,accuracy,hyperparameters\n")
 
         for (model, accuracy) in classification_accuracies:
@@ -109,7 +109,7 @@ def save_accuracies(classification_accuracies, regression_accuracies,
                     f"{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
 
-def classification_prediction(data, targets, hyperparams_tuning, verbose,
+def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
                               train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
@@ -213,7 +213,7 @@ def classification_prediction(data, targets, hyperparams_tuning, verbose,
         accuracy = accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
 
-        save_learning_curve(model, learning_curve_params)
+        save_learning_curve(model, learning_curve_params, n)
 
     return accuracies
 
@@ -225,11 +225,11 @@ def classification(data, n, hyperparams_tuning, verbose):
     # targets = targets.head(50)
 
     accuracies = classification_prediction(data, targets, hyperparams_tuning,
-                                           verbose)
+                                           n, verbose)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
-def regression_prediction(data, targets, hyperparams_tuning, verbose,
+def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
                           train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
@@ -318,7 +318,7 @@ def regression_prediction(data, targets, hyperparams_tuning, verbose,
         accuracy = my_accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
 
-        save_learning_curve(model, learning_curve_params)
+        save_learning_curve(model, learning_curve_params, n)
 
     return accuracies
 
@@ -330,7 +330,7 @@ def regression(data, n, hyperparams_tuning, verbose):
     # targets = targets.head(500)
 
     accuracies = regression_prediction(data, targets, hyperparams_tuning,
-                                       verbose)
+                                       n, verbose)
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
@@ -362,7 +362,8 @@ def main():
     regression_accuracies = regression(data, n, hyperparams_tuning, verbose)
     # classification_accuracies = []
     # regression_accuracies = []
-    save_accuracies(classification_accuracies, regression_accuracies, filename)
+    save_accuracies(classification_accuracies, regression_accuracies, n,
+                    filename)
 
 
 if __name__ == "__main__":
