@@ -337,6 +337,9 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python3 predict.py <n> <file name> [--notuning] [--verbose]")
         sys.exit(1)
+    if len(sys.argv) > 1 and sys.argv[1] == "--help":
+        print("Usage: python3 predict.py <n> <file name> [--notuning] [--verbose]")
+        sys.exit(0)
 
     n = int(sys.argv[1])
     filename = sys.argv[2]

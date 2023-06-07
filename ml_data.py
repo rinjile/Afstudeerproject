@@ -182,6 +182,9 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python3 ml_data.py <n>")
         sys.exit(1)
+    if len(sys.argv) > 1 and sys.argv[1] == "--help":
+        print("Usage: python3 ml_data.py <n>")
+        sys.exit(0)
 
     n = int(sys.argv[1])
 
