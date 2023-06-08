@@ -95,7 +95,7 @@ def plot_bars(data, filename, n, model_type="all"):
 
 
 def plot_learning_curve(data, model, n):
-    # Multiply the data by 100 to get the accuracy in percentages
+    # Multiply the data by 100 to get the accuracies in percentages
     if model in classifiers:
         data = data.apply(lambda x: x * 100 if x.name != "train_size" else x)
 
@@ -162,7 +162,6 @@ def plot_accuracies_over_n(model_type):
     plt.title(rf"Nauwkeurigheid van de {model_title} over $n$")
     plt.xlabel(r"$n$")
     plt.ylabel("Nauwkeurigheid (%)")
-    # plt.legend(loc="best")
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     plt.savefig(f"plots/accuracies_over_n_{model_type}.png", dpi=1000)
     plt.clf()  # Clear the figure
