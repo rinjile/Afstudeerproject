@@ -157,7 +157,7 @@ def plot_accuracies_over_n(model_type):
 
     # Make the width of the plot smaller
     box = plt.gca().get_position()
-    plt.gca().set_position([box.x0, box.y0, 0.65 * box.width, box.height])
+    plt.gca().set_position([box.x0, box.y0, 0.66 * box.width, box.height])
 
     plt.title(rf"Nauwkeurigheid van de {model_title} over $n$")
     plt.xlabel(r"$n$")

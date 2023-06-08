@@ -335,10 +335,12 @@ def regression(data, n, hyperparams_tuning, verbose):
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--help":
-        print("Usage: python3 predict.py <n> <file name> [--notuning] [--verbose]")
+        print("Usage: python3 predict.py <n> <file name> [--notuning] "
+              "[--verbose]")
         sys.exit(0)
     if len(sys.argv) < 3:
-        print("Usage: python3 predict.py <n> <file name> [--notuning] [--verbose]")
+        print("Usage: python3 predict.py <n> <file name> [--notuning] "
+              "[--verbose]")
         sys.exit(1)
 
     n = int(sys.argv[1])
@@ -346,7 +348,8 @@ def main():
     check_file_exists(filename)
 
     start_time = time.time()
-    print(f"Started at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
+    start_time_str = datetime.datetime.now().strftime('%d-%m-%Y %H:%M')
+    print(f"Started at: {start_time_str}.")
 
     hyperparams_tuning = True
     verbose = 0
@@ -368,8 +371,12 @@ def main():
     save_accuracies(classification_accuracies, regression_accuracies, n,
                     filename)
 
-    print(f"Ended at: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.")
-    print(f'Execution time: {((time.time() - start_time) / 3600):.2f} hours.')
+    with open(f"results/n{n}/execution_time{n}.txt", "w") as f:
+        f.write(f"Started at: {start_time_str}.\n")
+        f.write(f"Ended at: "
+                f"{datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.\n")
+        f.write(f"Execution time: {((time.time() - start_time) / 3600):.2f} "
+                f"hours.\n")
 
 
 if __name__ == "__main__":
