@@ -110,6 +110,19 @@ def save_accuracies(classification_accuracies, regression_accuracies, n,
                     f"{accuracy * 100:.2f},\"{model.get_params()}\"\n")
 
 
+def save_execution_times(start_time, start_time_str, classification_time, n):
+    with open(f"results/n{n}/execution_time{n}.txt", "w") as f:
+        f.write(f"Started at: {start_time_str}.\n")
+        f.write(f"Ended at: "
+                f"{datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.\n\n")
+        f.write(f"Classification time: "
+                f"{((classification_time - start_time) / 3600):.2f} hours.\n")
+        f.write(f"Regression time: "
+                f"{((time.time() - classification_time) / 3600):.2f} hours.\n")
+        f.write(f"Total execution time: "
+                f"{((time.time() - start_time) / 3600):.2f} hours.\n")
+
+
 def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
                               train_size=0.8):
     train_len = int(data.shape[0] * train_size)
@@ -144,15 +157,11 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
          {
              "estimator__n_neighbors": range(1, 11),
              "estimator__weights": ["uniform", "distance"],
-             # "estimator__algorithm": ["ball_tree", "kd_tree", "brute"],
-             # "estimator__leaf_size": [10, 20, 30, 40, 50],
              "estimator__p": [1, 2, 3]
          }),
         (SVC(probability=True, max_iter=1000, random_state=random_seed),
          {
-             # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
-             # "estimator__degree": [1, 2, 3, 4, 5],
              "estimator__gamma": ["scale", "auto"]
          }),
         (MLPClassifier(random_state=random_seed),
@@ -175,12 +184,6 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
              "estimator__criterion": ["gini", "entropy", "log_loss"],
              "estimator__max_features": [None, "sqrt", "log2"]
          })
-
-        # GaussianProcessClassifier(),
-        # RidgeClassifier(),
-        # ComplementNB(),
-        # ExtraTreeClassifier(),
-        # AdaBoostClassifier(),
     ]
 
     learning_curve_params = {
@@ -190,7 +193,6 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
         "cv": 5,
         "scoring": "accuracy",
         "random_state": random_seed
-        # "n_jobs": 4,
     }
 
     accuracies = []
@@ -220,11 +222,9 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
 def classification(data, n, hyperparams_tuning, verbose):
     targets = pd.read_csv(f"data/ml_targets_result{n}.csv", low_memory=False,
                           header=None)
-    # data = data.head(50)
-    # targets = targets.head(50)
-
     accuracies = classification_prediction(data, targets, hyperparams_tuning,
                                            n, verbose)
+
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
@@ -249,7 +249,6 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
          }),
         (SVR(max_iter=1000),
          {
-             # "estimator__C": [0.1, 1, 10, 100],
              "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
              "estimator__gamma": ["scale", "auto"]
          }),
@@ -275,10 +274,6 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
                                       "poisson"],
              "estimator__max_features": [None, "sqrt", "log2"]
          })
-
-        # (GradientBoostingRegressor(random_state=random_seed),
-        #  {})
-        # BayesianRidge
     ]
 
     learning_curve_params = {
@@ -286,9 +281,8 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
         "y": y_train,
         "train_sizes": np.linspace(0.1, 1.0, 10),
         "cv": 5,
-        "scoring": "neg_mean_absolute_error",  # TODO: andere?
+        "scoring": "neg_mean_absolute_error",
         "random_state": random_seed
-        # "n_jobs": 4,
     }
 
     accuracies = []
@@ -296,7 +290,6 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
     for (model, params) in tqdm(models,
                                 desc="Predicting the score (regression)"):
         if hyperparams_tuning:
-            # TODO: andere scoring?
             model = GridSearchCV(MultiOutputRegressor(model), params, cv=5,
                                  scoring="neg_mean_absolute_error",
                                  verbose=verbose)
@@ -325,11 +318,9 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
 def regression(data, n, hyperparams_tuning, verbose):
     targets = pd.read_csv(f"data/ml_targets_score{n}.csv", low_memory=False,
                           header=None)
-    # data = data.head(500)
-    # targets = targets.head(500)
-
     accuracies = regression_prediction(data, targets, hyperparams_tuning,
                                        n, verbose)
+
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
 
@@ -365,18 +356,12 @@ def main():
     data = pd.read_csv(f"data/ml_data{n}.csv", low_memory=False)
     classification_accuracies = classification(data, n, hyperparams_tuning,
                                                verbose)
+    classification_time = time.time()
     regression_accuracies = regression(data, n, hyperparams_tuning, verbose)
-    # classification_accuracies = []
-    # regression_accuracies = []
+
     save_accuracies(classification_accuracies, regression_accuracies, n,
                     filename)
-
-    with open(f"results/n{n}/execution_time{n}.txt", "w") as f:
-        f.write(f"Started at: {start_time_str}.\n")
-        f.write(f"Ended at: "
-                f"{datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}.\n")
-        f.write(f"Execution time: {((time.time() - start_time) / 3600):.2f} "
-                f"hours.\n")
+    save_execution_times(start_time, start_time_str, classification_time, n)
 
 
 if __name__ == "__main__":
