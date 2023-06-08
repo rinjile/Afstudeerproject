@@ -123,14 +123,57 @@ def plot_learning_curve(data, model, n):
     plt.clf()  # Clear the figure
 
 
+def plot_accuracies_over_n(model_type):
+    accuracies = []
+    x = []
+
+    if model_type == "classification":
+        models = classifiers
+    else:
+        models = [model for model in model_names.keys() if model not in
+                  classifiers]
+
+    for model in models:
+        temp = []
+
+        for n in range(1, 11):
+            if not os.path.exists(f"results/n{n}/accuracies{n}.csv"):
+                continue
+            data = pd.read_csv(f"results/n{n}/accuracies{n}.csv")
+            accuracy = data[data["model"] == model]["accuracy"].iloc[0]
+            temp.append(accuracy)
+            x.append(n)
+
+        accuracies.append(temp)
+
+    x = list(set(x))
+    labels = [model_names[model] for model in models]
+
+    for i in range(len(models)):
+        plt.plot(x, accuracies[i], label=labels[i])
+
+    # Make the width of the plot smaller
+    box = plt.gca().get_position()
+    plt.gca().set_position([box.x0, box.y0, 0.65 * box.width, box.height])
+
+    plt.title(r"Nauwkeurigheid van de modellen over $n$")
+    plt.xlabel(r"$n$")
+    plt.ylabel("Nauwkeurigheid (%)")
+    # plt.legend(loc="best")
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    plt.savefig(f"plots/accuracies_over_n_{model_type}.png", dpi=1000)
+    plt.clf()  # Clear the figure
+
+
 def main():
     usage_message = "Usage: python3 plot.py --bar <n> <file>\n" \
-                    "       python3 plot.py --lc <n> [file]"
+                    "       python3 plot.py --lc <n> [file]\n" \
+                    "       python3 plot.py --n"
 
     if len(sys.argv) > 1 and sys.argv[1] == "--help":
         print(usage_message)
         sys.exit(0)
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print(usage_message)
         sys.exit(1)
 
@@ -171,6 +214,10 @@ def main():
 
             data = pd.read_csv(f"results/n{n}/{file}")
             plot_learning_curve(data, model, n)
+    elif sys.argv[1] == "--n":
+        plot_accuracies_over_n("classification")
+        plot_accuracies_over_n("regression")
+        print("Plotted accuracies over n")
     else:
         print(usage_message)
         sys.exit(1)
