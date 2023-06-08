@@ -50,12 +50,12 @@ model_names = {
 def plot_bars(data, filename, n, model_type="all"):
     if model_type == "classification":
         data = data[data["type"] == model_type]
-        title = "Nauwkeurigheid van verschillende classificators"
+        title = "Nauwkeurigheid van de classificators"
     elif model_type == "regression":
         data = data[data["type"] == model_type]
-        title = "Nauwkeurigheid van verschillende regressors"
+        title = "Nauwkeurigheid van de regressors"
     else:
-        title = "Nauwkeurigheid van verschillende modellen"
+        title = "Nauwkeurigheid van de modellen"
 
     data = data.sort_values(by="type", ascending=False)
     data = data.sort_values(by="accuracy", ascending=True)
