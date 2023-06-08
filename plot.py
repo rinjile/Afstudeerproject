@@ -129,9 +129,11 @@ def plot_accuracies_over_n(model_type):
 
     if model_type == "classification":
         models = classifiers
+        model_title = "classificators"
     else:
         models = [model for model in model_names.keys() if model not in
                   classifiers]
+        model_title = "regressors"
 
     for model in models:
         temp = []
@@ -139,6 +141,7 @@ def plot_accuracies_over_n(model_type):
         for n in range(1, 11):
             if not os.path.exists(f"results/n{n}/accuracies{n}.csv"):
                 continue
+
             data = pd.read_csv(f"results/n{n}/accuracies{n}.csv")
             accuracy = data[data["model"] == model]["accuracy"].iloc[0]
             temp.append(accuracy)
@@ -146,17 +149,17 @@ def plot_accuracies_over_n(model_type):
 
         accuracies.append(temp)
 
-    x = list(set(x))
+    x = sorted(list(set(x)))
     labels = [model_names[model] for model in models]
 
     for i in range(len(models)):
-        plt.plot(x, accuracies[i], label=labels[i])
+        plt.plot(x, accuracies[i], label=labels[i], marker="o")
 
     # Make the width of the plot smaller
     box = plt.gca().get_position()
     plt.gca().set_position([box.x0, box.y0, 0.65 * box.width, box.height])
 
-    plt.title(r"Nauwkeurigheid van de modellen over $n$")
+    plt.title(rf"Nauwkeurigheid van de {model_title} over $n$")
     plt.xlabel(r"$n$")
     plt.ylabel("Nauwkeurigheid (%)")
     # plt.legend(loc="best")
