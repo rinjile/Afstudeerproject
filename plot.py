@@ -8,6 +8,7 @@ Description:
 TODO
 """
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
@@ -154,6 +155,9 @@ def plot_accuracies_over_n(model_type):
 
     for i in range(len(models)):
         plt.plot(x, accuracies[i], label=labels[i], marker="o")
+
+    plt.plot(x, np.mean(accuracies, axis=0), "--o", label="Gemiddelde",
+             color="black")
 
     # Make the width of the plot smaller
     box = plt.gca().get_position()
