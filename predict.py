@@ -59,9 +59,13 @@ def my_accuracy_score(y_true, y_pred):
     return correct / y_pred.shape[0]
 
 
-def prob2target(prob):
+def prob2target(prob,  t):
     for i, row in prob.iterrows():
         max_prob = max(row)
+
+        if max_prob < t:
+            prob.iloc[i] = [-1, -1, -1]
+            continue
 
         if row.value_counts()[max_prob] > 1:
             max_indices = np.where(row == max_prob)[0]
@@ -123,7 +127,7 @@ def save_execution_times(start_time, start_time_str, classification_time, n):
                 f"{((time.time() - start_time) / 3600):.2f} hours.\n")
 
 
-def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
+def classification_prediction(data, targets, hyperparams_tuning, n, verbose, t,
                               train_size=0.8):
     train_len = int(data.shape[0] * train_size)
 
@@ -209,7 +213,10 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
             model.fit(X_train, y_train)
 
         y_pred_prob = model.predict_proba(X_test)
-        y_pred = prob2target(pd.DataFrame(y_pred_prob))
+        y_pred = prob2target(pd.DataFrame(y_pred_prob), t)
+
+        y_pred = y_pred[y_pred != -1].dropna()
+        y_test = y_test[y_pred.index]
 
         accuracy = accuracy_score(y_test, y_pred)
         accuracies.append((model.estimator, accuracy))
@@ -219,11 +226,11 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
     return accuracies
 
 
-def classification(data, n, hyperparams_tuning, verbose):
+def classification(data, n, hyperparams_tuning, verbose, t):
     targets = pd.read_csv(f"data/ml_targets_result{n}.csv", low_memory=False,
                           header=None)
     accuracies = classification_prediction(data, targets, hyperparams_tuning,
-                                           n, verbose)
+                                           n, verbose, t)
 
     return sorted(accuracies, key=lambda x: x[1], reverse=True)
 
@@ -325,13 +332,13 @@ def regression(data, n, hyperparams_tuning, verbose):
 
 
 def main():
+    usage_message = "Usage: python3 predict.py <n> <file name> [--notuning] " \
+                    "[--verbose] [--t <threshold>]"
     if len(sys.argv) > 1 and sys.argv[1] == "--help":
-        print("Usage: python3 predict.py <n> <file name> [--notuning] "
-              "[--verbose]")
+        print(usage_message)
         sys.exit(0)
     if len(sys.argv) < 3:
-        print("Usage: python3 predict.py <n> <file name> [--notuning] "
-              "[--verbose]")
+        print(usage_message)
         sys.exit(1)
 
     n = int(sys.argv[1])
@@ -344,6 +351,7 @@ def main():
 
     hyperparams_tuning = True
     verbose = 0
+    t = 0.0
 
     if len(sys.argv) > 3:
         if "--notuning" in sys.argv:
@@ -352,10 +360,13 @@ def main():
         if "--verbose" in sys.argv:
             verbose = 3
             print("Verbose mode is enabled.")
+        if "--t" in sys.argv:
+            t = float(sys.argv[sys.argv.index("--t") + 1])
+            print(f"t is set to {t}.")
 
     data = pd.read_csv(f"data/ml_data{n}.csv", low_memory=False)
     classification_accuracies = classification(data, n, hyperparams_tuning,
-                                               verbose)
+                                               verbose, t)
     classification_time = time.time()
     regression_accuracies = regression(data, n, hyperparams_tuning, verbose)
 
