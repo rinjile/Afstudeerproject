@@ -131,10 +131,12 @@ def plot_accuracies_over_n(model_type):
     if model_type == "classification":
         models = classifiers
         model_title = "classificators"
+        mean_label = "Gemiddelde"
     else:
         models = [model for model in model_names.keys() if model not in
                   classifiers]
         model_title = "regressors"
+        mean_label = " Gemiddelde"
 
     for model in models:
         temp = []
@@ -156,7 +158,7 @@ def plot_accuracies_over_n(model_type):
     for i in range(len(models)):
         plt.plot(x, accuracies[i], label=labels[i], marker="o")
 
-    plt.plot(x, np.mean(accuracies, axis=0), "--o", label="Gemiddelde",
+    plt.plot(x, np.mean(accuracies, axis=0), "--o", label=mean_label,
              color="black")
 
     # Make the width of the plot smaller
