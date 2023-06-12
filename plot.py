@@ -91,7 +91,7 @@ def plot_bars(data, filename, n, model_type="all"):
         plt.legend(handles, labels, loc="best")
 
     plt.tight_layout()
-    plt.savefig(f"plots/n{n}/{filename}_{model_type}.png", dpi=1000)
+    plt.savefig(f"plots/n{n}/{filename}_{model_type}.png", dpi=300)
     plt.clf()  # Clear the figure
 
 
@@ -120,7 +120,7 @@ def plot_learning_curve(data, model, n):
         plt.ylabel("Gemiddelde absolute fout (negatie)")
 
     plt.legend(loc="best")
-    plt.savefig(f"plots/n{n}/learning_curve_{model}{n}.png", dpi=1000)
+    plt.savefig(f"plots/n{n}/learning_curve_{model}{n}.png", dpi=300)
     plt.clf()  # Clear the figure
 
 
@@ -167,7 +167,7 @@ def plot_accuracies_over_n(model_type):
     plt.xlabel(r"$n$")
     plt.ylabel("Nauwkeurigheid (%)")
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    plt.savefig(f"plots/accuracies_over_n_{model_type}.png", dpi=1000)
+    plt.savefig(f"plots/accuracies_over_n_{model_type}.png", dpi=300)
     plt.clf()  # Clear the figure
 
 
