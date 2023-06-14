@@ -1,0 +1,6 @@
+Started at: 13-06-2023 17:02.
+Ended at: 14-06-2023 02:45.
+
+Classification time: 4.85 hours.
+Regression time: 4.86 hours.
+Total execution time: 9.71 hours.
