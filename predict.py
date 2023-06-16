@@ -159,16 +159,21 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
          }),
-        (SVC(probability=True, max_iter=1000, random_state=random_seed),
+        (SVC(probability=True, random_state=random_seed),
          {
-             "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
-             "estimator__gamma": ["scale", "auto"]
+             "estimator__kernel": ["poly", "rbf", "sigmoid"],
+             "estimator__C": [0.1, 0.5, 1, 3],
          }),
         (MLPClassifier(random_state=random_seed),
          {
              "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2),
                                                (100, 2), (500, 2), (50, 3),
                                                (100, 3), (500, 3)],
+             # "estimator__hidden_layer_sizes": [(2 * 70 * n,), (3 * 70 * n,),
+             #                                   (2 * 70 * n, 2),
+             #                                   (3 * 70 * n, 2),
+             #                                   (2 * 70 * n, 3),
+             #                                   (3 * 70 * n, 3)],
              "estimator__activation": ["identity", "logistic", "tanh", "relu"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
          }),
@@ -247,16 +252,22 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
          }),
-        (SVR(max_iter=1000),  # TODO: epsilon op 1/2
+        (SVR(),  # TODO: epsilon op 1/2
          {
-             "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
-             "estimator__gamma": ["scale", "auto"]
+             "estimator__kernel": ["poly", "rbf", "sigmoid"],
+             "estimator__C": [0.1, 0.5, 1, 3],
+             "estimator__epsilon": [0.1, 0.5, 1, 2]
          }),
         (MLPRegressor(random_state=random_seed),
          {
              "estimator__hidden_layer_sizes": [(50,), (100,), (500,), (50, 2),
                                                (100, 2), (500, 2), (50, 3),
                                                (100, 3), (500, 3)],
+             # "estimator__hidden_layer_sizes": [(2 * 70 * n,), (3 * 70 * n,),
+             #                                   (2 * 70 * n, 2),
+             #                                   (3 * 70 * n, 2),
+             #                                   (2 * 70 * n, 3),
+             #                                   (3 * 70 * n, 3)],
              "estimator__activation": ["identity", "logistic", "tanh", "relu"],
              "estimator__alpha": [0.0001, 0.001, 0.01, 0.1, 1],
          }),
