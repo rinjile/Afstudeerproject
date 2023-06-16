@@ -162,7 +162,7 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
         (SVC(probability=True, random_state=random_seed),
          {
              "estimator__kernel": ["poly", "rbf", "sigmoid"],
-             "estimator__C": [0.1, 0.5, 1, 3],
+             "estimator__C": [0.1, 0.5, 1, 3]
          }),
         (MLPClassifier(random_state=random_seed),
          {
@@ -255,8 +255,7 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
         (SVR(),  # TODO: epsilon op 1/2
          {
              "estimator__kernel": ["poly", "rbf", "sigmoid"],
-             "estimator__C": [0.1, 0.5, 1, 3],
-             "estimator__epsilon": [0.1, 0.5, 1, 2]
+             "estimator__C": [0.1, 0.5, 1, 3]
          }),
         (MLPRegressor(random_state=random_seed),
          {
