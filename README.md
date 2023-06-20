@@ -3,19 +3,19 @@
 ## Table of Contents
 - [Description](#description)
 - [Requirements](#requirements)
-- [Files](#main-files)
+- [Main Files](#main-files)
 - [Usage](#usage)
 
 ## Description
 In this project, football matches from the top 5 European leagues 
-(England, Spain, Germany, Italy, and France) are predicted using
-different machine learning algorithms. The seasons 2015/2016 to
-and including 2021/2022 are used for training and testing. The first
-80% of all the matches are used for training and the last 20% for
-testing. The data are taken from is from [API-Football](https://www.api-football.com).
+(England, Spain, Germany, Italy, and France) are predicted using 
+different machine learning algorithms. The seasons 2015/2016 to 
+2021/2022 are used for training and testing. The first 80% of all 
+matches are used for training, and the last 20% for testing. 
+The data are obtained from the [API-Football](https://www.api-football.com).
 
-The used algorithms are: 
-- Naive Bayes
+The algorithms used are: 
+- Naive Bayes (Gaussian and Multinomial)
 - Linear Regression
 - Logistic Regression
 - K-Nearest Neighbors
@@ -24,18 +24,16 @@ The used algorithms are:
 - Decision Tree
 - Random Forest
 
-The features set is based on the last *n* matches of both teams and
-the last *n* matches between the two teams. Muitiple *n* are used
-to find the best value for *n*. The experiments are done with *n*
-ranging from 1 to and including 10. The features are the match score 
-and statistics like shots on target, corners, cards, 
-possession, etc.
+The feature set is based on the last *n* matches of both teams and 
+the last *n* matches between the two teams. Multiple values of *n* are used 
+to determine the best value. The experiments are conducted with *n* 
+ranging from 1 to 10. The features include match score and statistics 
+such as shots on target, corners, cards, possession, etc.
 
-A grid search is used to find the best hyperparameters for each
-algorithm. In this grid search, the 5-fold cross-validation is applied
-to the training data. Furthermore, the learning curves of the
-algorithms are plotted to see how the performance of the algorithms
-changes with the training set size.
+A grid search is performed to find the best hyperparameters for each 
+algorithm. The grid search uses 5-fold cross-validation on the training data.
+Additionally, learning curves are plotted to visualize how the algorithm's 
+performance changes with the training set size.
 
 ## Requirements
 The required Python packages are listed in the `requirements.txt` file.
@@ -52,17 +50,17 @@ The project contains 4 main files:
     provided in `data/`.)
 - `ml_data.py`: This file creates the feature set and the target set.
   The data are saved in the `data/` folder.
-- `predict.py`: This file trains the algorithms and predicts the matches. 
+- `predict.py`: This file trains the algorithms and predicts the match outcomes and scores. 
   The results are saved in the `results/` folder. (Note: The results of the 
   experiments are already provided in `results/`.)
 - `plot.py`: This file plots the learning curves and the bar charts of 
   the accuracy of the algorithms. The plots are saved in the `plots/` folder.
 
 ## Usage
-All the files are provided with a help message for the usage.
-To see the help message, add the argument `--help` to the command.
-In this given message, `< >` means that the argument needs to be replaced
-and `[ ]` means that the argument is optional.
+All files are accompanied by a help message for usage instructions. 
+To view the help message, add the argument `--help` to the command. 
+In the help message, `< >` indicates that the argument needs to be replaced, 
+and `[ ]` indicates that the argument is optional.
 
 Some examples:
 - Create the dataset for the last 3 matches:
@@ -74,12 +72,12 @@ python ml_data.py 3
 ```
 python predict.py 5 accuracies --notuning
 ```
-- Plot the bar charts of the results, which are saved in `results/n10/accuracies10.csv`,
-  from the dataset for the last 10 matches:
+- Plot the bar charts of the results from the dataset for the last 10 matches, 
+  which are saved in `results/n10/accuracies10.csv`:
 ```
 python plot.py 10 results/n10/accuracies10.csv
 ```
-- Plot the accuracies of the algorithms for the values of *n* from 1 to and including 10:
+- Plot the accuracies of the algorithms for values of *n* ranging from 1 to 10:
 ```
   python plot.py --n
 ```
