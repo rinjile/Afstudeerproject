@@ -1,5 +1,11 @@
 # Data Goals: Predictive Football with Advanced Statistics
 
+## Table of Contents
+- [Description](#description)
+- [Requirements](#requirements)
+- [Files](#files)
+- [Usage](#usage)
+
 ## Description
 In this project, football matches from the top 5 European leagues 
 (England, Spain, Germany, Italy, and France) are predicted using
