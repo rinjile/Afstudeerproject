@@ -3,7 +3,7 @@
 ## Table of Contents
 - [Description](#description)
 - [Requirements](#requirements)
-- [Files](#files)
+- [Files](#main-files)
 - [Usage](#usage)
 
 ## Description
@@ -44,7 +44,7 @@ To install them, run the following command:
 pip install -r requirements.txt
 ```
 
-## Files
+## Main Files
 The project contains 4 main files:
 - `api-football.py`: This file collects the data from [API-Football](https://www.api-football.com).
   The data are saved in the `data/` folder. (Note: Since the API key is
