@@ -18,7 +18,6 @@ from tqdm import tqdm
 classifiers = [
     "LogisticRegression",
     "GaussianNB",
-    "BernoulliNB",
     "MultinomialNB",
     "KNeighborsClassifier",
     "SVC",
@@ -31,7 +30,6 @@ classifiers = [
 model_names = {
     "LogisticRegression": "Logistic Regression",
     "GaussianNB": "Gaussian Naive Bayes",
-    "BernoulliNB": "Bernoulli Naive Bayes",
     "MultinomialNB": "Multinomial Naive Bayes",
     "KNeighborsClassifier": "K-Nearest Neighbors",
     "SVC": "Support Vector Machine",

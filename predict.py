@@ -17,7 +17,7 @@ import time
 import datetime
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.neural_network import MLPClassifier, MLPRegressor
@@ -142,10 +142,6 @@ def classification_prediction(data, targets, hyperparams_tuning, n, verbose,
          }),
         (GaussianNB(),
          {}),  # No hyperparameters to tune
-        (BernoulliNB(),  # (TODO: deze doen?)
-         {
-                "estimator__alpha": [0.01, 0.1, 0.5, 1, 2],
-         }),
         (MultinomialNB(),
          {
              "estimator__alpha": [0.01, 0.1, 0.5, 1, 2],
@@ -245,7 +241,7 @@ def regression_prediction(data, targets, hyperparams_tuning, n, verbose,
              "estimator__weights": ["uniform", "distance"],
              "estimator__p": [1, 2, 3]
          }),
-        (SVR(),  # TODO: epsilon op 1/2
+        (SVR(),
          {
              "estimator__kernel": ["poly", "rbf", "sigmoid"],
              "estimator__C": [0.1, 0.5, 1, 3]
