@@ -2,10 +2,7 @@
 Name: Rinji Le
 Student ID: 13344552
 Course: Afstudeerproject Bachelor Informatica
-Date: TODO
-
-Description:
-TODO
+Date: June 27, 2023
 """
 
 import numpy as np
